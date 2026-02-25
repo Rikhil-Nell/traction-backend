@@ -24,7 +24,10 @@ async def google_login(request: Request):
     state = secrets.token_urlsafe(32)
     request.session["oauth_state"] = state
 
-    redirect_uri = request.url_for("google_callback")
+    # Use GOOGLE_REDIRECT_URI if configured (required for production), fallback to generating it
+    from app.core.config import settings
+    redirect_uri = settings.GOOGLE_REDIRECT_URI or str(request.url_for("google_callback"))
+    
     return await oauth.google.authorize_redirect(request, redirect_uri, state=state)
 
 
