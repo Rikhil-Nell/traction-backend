@@ -6,9 +6,10 @@ from fastapi import APIRouter, Depends, Request, Response
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.responses import RedirectResponse
 
-from app.api.deps import get_current_user, get_db
 from app.controllers import auth_controller
+from app.db.database import get_db
 from app.core.oauth import oauth
+from app.core.security import get_current_user
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, UserProfile
 

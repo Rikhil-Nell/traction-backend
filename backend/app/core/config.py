@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     )
 
     # ── App ───────────────────────────────────────────────────
-    MODE: ModeEnum = ModeEnum.development
+    MODE: ModeEnum = ModeEnum.production
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "TRACTION"
 
@@ -66,6 +66,5 @@ class Settings(BaseSettings):
 
     # ── OpenAI ────────────────────────────────────────────────
     OPENAI_API_KEY: str = ""
-
 
 settings = Settings()
