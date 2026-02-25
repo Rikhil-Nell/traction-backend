@@ -45,4 +45,7 @@ jobs:
               -e DATABASE_NAME="${{ secrets.DATABASE_NAME }}" \
               -e DATABASE_PORT="${{ secrets.DATABASE_PORT }}" \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e GOOGLE_REDIRECT_URI="${{ secrets.GOOGLE_REDIRECT_URI }}" \
               remiscus/traction-backend:latest
