@@ -31,6 +31,7 @@ from app.core.ai_generators import (
     DOCUMENT_TYPE_TO_ATTR,
     DOCUMENT_TYPE_TITLES,
 )
+from app.db.database import AsyncSessionLocal
 from app.models.chat_message import ChatMessage
 from app.models.project import Project, ProjectDocument
 from app.models.user import User
@@ -244,7 +245,118 @@ async def _handle_doc_mode(
 
 
 # ---------------------------------------------------------------------------
-# 4.  _handle_design_mode
+# 4.  _background_generate  (runs outside the request lifecycle)
+# ---------------------------------------------------------------------------
+
+async def _background_generate(
+    project_id: uuid.UUID,
+    project_name: str,
+    all_fields: dict,
+    current_hash: str,
+    docs_needing_content: list[tuple[uuid.UUID, str, dict]],
+) -> None:
+    """Run all LLM generation in the background with its own DB session.
+
+    Parameters
+    ----------
+    project_id:
+        The project to update when generation finishes.
+    project_name:
+        Human-readable project name (for prompts).
+    all_fields:
+        ``{doc_type: fields_dict}`` for every document type.
+    current_hash:
+        Hash of the extraction fields, stored on the project so the next
+        request can skip generation if nothing changed.
+    docs_needing_content:
+        List of ``(doc_id, doc_type, fields)`` for documents that still
+        need their polished markdown generated.
+    """
+    async with AsyncSessionLocal() as db:
+        try:
+            async def _gen_doc(doc_id, doc_type, fields):
+                try:
+                    content = await generate_document_content(doc_type, project_name, fields)
+                    return (doc_id, content, None)
+                except Exception as e:
+                    return (doc_id, None, e)
+
+            async def _gen_llms():
+                try:
+                    return await generate_llms_txt(project_name, all_fields)
+                except Exception:
+                    logger.warning("Failed to generate llms.txt for project %s", project_id, exc_info=True)
+                    return None
+
+            results = await asyncio.gather(
+                generate_full_html(project_name, all_fields),
+                *[_gen_doc(did, dtype, flds) for did, dtype, flds in docs_needing_content],
+                _gen_llms(),
+            )
+
+            full_html = results[0]
+            doc_results = results[1:-1]
+            llms_txt = results[-1]
+
+            # Re-fetch project inside this session
+            project = await db.get(Project, project_id)
+            if project is None:
+                logger.error("Project %s disappeared during generation", project_id)
+                return
+
+            project.full_html = full_html
+            logger.info("HTML deck generated for project %s", project_id)
+
+            for doc_id, content, err in doc_results:
+                if err:
+                    logger.warning("Failed to generate content for doc %s: %s", doc_id, err)
+                elif content:
+                    doc = await db.get(ProjectDocument, doc_id)
+                    if doc:
+                        doc.content = content
+                        doc.status = "ready"
+                        db.add(doc)
+
+            if llms_txt:
+                project.llms_txt = llms_txt
+
+            project.ai_json = await generate_ai_json(project_name, all_fields)
+            project.last_generation_fields_hash = current_hash
+            project.status = "draft"
+            db.add(project)
+
+            # Save a completion message so the chat shows feedback
+            done_msg = ChatMessage(
+                project_id=project_id,
+                role="assistant",
+                content="Your pitch deck is ready! Click **Pitchdeck** above to view it.",
+            )
+            db.add(done_msg)
+
+            await db.commit()
+            logger.info("Background generation complete for project %s", project_id)
+
+        except Exception:
+            logger.exception("Background design generation failed for project %s", project_id)
+            try:
+                project = await db.get(Project, project_id)
+                if project:
+                    project.status = "draft"
+                    db.add(project)
+
+                    fail_msg = ChatMessage(
+                        project_id=project_id,
+                        role="assistant",
+                        content="Design generation encountered an error. Please try again.",
+                    )
+                    db.add(fail_msg)
+                    await db.commit()
+            except Exception:
+                logger.exception("Failed to update error status for project %s", project_id)
+
+
+# ---------------------------------------------------------------------------
+# 5.  _handle_design_mode
 # ---------------------------------------------------------------------------
 
 async def _handle_design_mode(
@@ -257,9 +369,7 @@ async def _handle_design_mode(
     1. Save the user message.
     2. Compute a hash of the current extraction fields and compare with
        ``project.last_generation_fields_hash``.
-    3. If different -> regenerate full_html, llms_txt, ai_json.
-       Document content is only generated once (first design-mode entry);
-       subsequent chats leave existing document content untouched.
+    3. If different -> kick off background generation and return immediately.
     4. If same -> skip regeneration and return a "no changes" message.
     """
     # --- save user message ---
@@ -300,93 +410,34 @@ async def _handle_design_mode(
             "project": None,
         }
 
-    # --- generation needed ---
+    # --- generation needed: start background task ---
     project.status = "generating"
     db.add(project)
-    await db.flush()
+    await db.commit()  # Commit now so the background task sees "generating"
 
-    try:
-        # Build all_fields dict from documents
-        all_fields = {doc.type: doc.fields or {} for doc in documents}
+    all_fields = {doc.type: doc.fields or {} for doc in documents}
+    docs_needing_content = [
+        (doc.id, doc.type, doc.fields or {})
+        for doc in documents
+        if not doc.content or doc.content.strip() == ""
+    ]
 
-        # --- Run LLM calls concurrently ---
-        # Only generate document content for docs that don't have it yet
-        # (first design-mode entry). Subsequent chats only regenerate the deck.
-        docs_needing_content = [
-            doc for doc in documents
-            if not doc.content or doc.content.strip() == ""
-        ]
-
-        async def _gen_doc(doc):
-            try:
-                content = await generate_document_content(
-                    doc.type, project.name, doc.fields or {}
-                )
-                return (doc, content, None)
-            except Exception as e:
-                return (doc, None, e)
-
-        async def _gen_llms():
-            try:
-                return await generate_llms_txt(project.name, all_fields)
-            except Exception:
-                logger.warning("Failed to generate llms.txt for project %s", project.id, exc_info=True)
-                return None
-
-        # Fire LLM calls: HTML deck + any docs needing content + llms.txt
-        results = await asyncio.gather(
-            generate_full_html(project.name, all_fields),
-            *[_gen_doc(doc) for doc in docs_needing_content],
-            _gen_llms(),
+    # Fire and forget
+    asyncio.create_task(
+        _background_generate(
+            project_id=project.id,
+            project_name=project.name,
+            all_fields=all_fields,
+            current_hash=current_hash,
+            docs_needing_content=docs_needing_content,
         )
+    )
 
-        # Unpack results: [full_html, *doc_results, llms_txt]
-        full_html = results[0]
-        doc_results = results[1:-1]
-        llms_txt = results[-1]
-
-        # Apply HTML deck
-        project.full_html = full_html
-        logger.info("HTML deck generated for project %s", project.id)
-
-        # Apply document contents (only for docs that were missing content)
-        for doc, content, err in doc_results:
-            if err:
-                logger.warning("Failed to generate content for doc %s (project %s): %s", doc.type, project.id, err)
-            elif content:
-                doc.content = content
-                doc.status = "ready"
-                db.add(doc)
-
-        # Apply llms.txt
-        if llms_txt:
-            project.llms_txt = llms_txt
-
-        # Generate ai.json (deterministic, no LLM)
-        project.ai_json = await generate_ai_json(project.name, all_fields)
-
-        # Store hash so next call can skip if nothing changed
-        project.last_generation_fields_hash = current_hash
-        project.status = "draft"
-        db.add(project)
-        await db.flush()
-        await db.refresh(project)
-
-    except Exception as e:
-        logger.exception("Design generation failed for project %s", project.id)
-        project.status = "draft"
-        db.add(project)
-        await db.flush()
-        raise HTTPException(
-            status_code=502,
-            detail=f"Design generation error: {str(e)}",
-        )
-
-    # --- save assistant message ---
+    # --- return immediately with "generating" status ---
     assistant_message = ChatMessage(
         project_id=project.id,
         role="assistant",
-        content="Design generation complete! Your pitch deck has been updated.",
+        content="Generating your pitch deck — this will take about a minute. You'll see the result appear shortly.",
     )
     db.add(assistant_message)
     await db.flush()
@@ -419,7 +470,7 @@ async def _handle_design_mode(
 
 
 # ---------------------------------------------------------------------------
-# 5.  send_message  (main entry point)
+# 6.  send_message  (main entry point)
 # ---------------------------------------------------------------------------
 
 async def send_message(
