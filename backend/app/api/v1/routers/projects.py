@@ -19,8 +19,8 @@ async def create_project(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a new project from an initial prompt."""
-    return await project_controller.create_project(user, payload.name, payload.prompt, db)
+    """Create a new project."""
+    return await project_controller.create_project(user, payload.name, db)
 
 
 @router.get("/", response_model=list[ProjectRead])
@@ -32,6 +32,25 @@ async def list_projects(
 ):
     """List all projects for the current user."""
     return await project_controller.list_projects(user, db, filter_status=status, sort_by=sort)
+
+
+@router.get("/shared")
+async def list_shared_projects(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all shared projects for the current user."""
+    return await project_controller.list_shared_projects(user, db)
+
+
+@router.get("/by-name/{project_name}", response_model=ProjectRead)
+async def get_project_by_name(
+    project_name: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a project by its name."""
+    return await project_controller.get_project_by_name(user, project_name, db)
 
 
 @router.get("/{project_id}", response_model=ProjectRead)
@@ -53,7 +72,7 @@ async def update_project(
 ):
     """Update a project's details."""
     return await project_controller.update_project(
-        user, project_id, name=payload.name, project_status=payload.status, db=db
+        user, project_id, name=payload.name, project_status=payload.status, mode=payload.mode, db=db
     )
 
 

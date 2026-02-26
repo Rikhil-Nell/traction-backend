@@ -1,24 +1,51 @@
 import uuid
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.project import Project, ProjectDocument
 from app.models.user import User
 
 
-async def create_project(user: User, name: str, prompt: str, db: AsyncSession) -> Project:
+async def create_project(user: User, name: str, db: AsyncSession) -> Project:
+    result = await db.execute(
+        select(Project).where(Project.user_id == user.id, func.lower(Project.name) == name.lower())
+    )
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="You already have a project with this name.")
+
     project = Project(
         user_id=user.id,
         name=name,
-        prompt=prompt,
-        status="generating",
+        prompt="",
+        status="draft",
+        mode="doc",
         slides_html=[]
     )
     db.add(project)
     await db.flush()
     await db.refresh(project)
+    return project
+
+
+async def list_shared_projects(user: User, db: AsyncSession) -> dict:
+    query = select(Project).where(Project.user_id == user.id, Project.status == "shared")
+    result = await db.execute(query)
+    projects = result.scalars().all()
+    return {"projects": projects, "count": len(projects)}
+
+
+async def get_project_by_name(user: User, project_name: str, db: AsyncSession) -> Project:
+    result = await db.execute(
+        select(Project).where(
+            Project.user_id == user.id,
+            func.lower(Project.name) == project_name.lower()
+        )
+    )
+    project = result.scalar_one_or_none()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
     return project
 
 
@@ -47,13 +74,15 @@ async def get_project(user: User, project_id: uuid.UUID, db: AsyncSession) -> Pr
 
 
 async def update_project(
-    user: User, project_id: uuid.UUID, name: str | None, project_status: str | None, db: AsyncSession
+    user: User, project_id: uuid.UUID, name: str | None, project_status: str | None, mode: str | None, db: AsyncSession
 ) -> Project:
     project = await get_project(user, project_id, db)
     if name is not None:
         project.name = name
     if project_status is not None:
         project.status = project_status
+    if mode is not None:
+        project.mode = mode
     
     db.add(project)
     await db.flush()

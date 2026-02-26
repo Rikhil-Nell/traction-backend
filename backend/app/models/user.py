@@ -5,7 +5,7 @@ from sqlmodel import Field, Relationship
 from app.models.base import BaseUUIDModel
 
 if TYPE_CHECKING:
-    from app.models.chat import Conversation
+    from app.models.project import Project
     from app.models.oauth_account import OAuthAccount
     from app.models.refresh_token import RefreshToken
 
@@ -24,7 +24,7 @@ class User(BaseUUIDModel, table=True):
         back_populates="user",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    conversations: list["Conversation"] = Relationship(
+    projects: list["Project"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )

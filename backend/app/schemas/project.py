@@ -6,21 +6,24 @@ from pydantic import BaseModel
 
 class ProjectBase(BaseModel):
     name: str
-    prompt: str
+    prompt: str = ""
+    mode: str = "doc"
     status: str = "draft"
     slides_html: list[str] = []
     full_html: str | None = None
     thumbnail_url: str | None = None
+    llms_txt: str | None = None
+    ai_json: dict | None = None
 
 
 class ProjectCreate(BaseModel):
     name: str
-    prompt: str
 
 
 class ProjectUpdate(BaseModel):
     name: str | None = None
     status: str | None = None  # "draft" or "shared"
+    mode: str | None = None
 
 
 class ProjectRead(ProjectBase):
@@ -33,10 +36,11 @@ class ProjectRead(ProjectBase):
 
 
 class ProjectDocumentBase(BaseModel):
-    type: str # 'product-description', 'timeline', etc.
+    type: str  # 'product-description', 'timeline', etc.
     title: str
-    content: str
+    content: str = ""
     status: str = "pending"
+    fields: dict | None = None
 
 
 class ProjectDocumentRead(ProjectDocumentBase):

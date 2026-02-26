@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, JSON
+from sqlalchemy import Column, JSON, Text, UniqueConstraint
 from sqlmodel import Field, Relationship
 
 from app.models.base import BaseUUIDModel
@@ -13,16 +13,25 @@ if TYPE_CHECKING:
 
 class Project(BaseUUIDModel, table=True):
     __tablename__ = "projects"
+    __table_args__ = (
+        UniqueConstraint("user_id", "name", name="uq_user_project_name"),
+    )
 
     user_id: UUID = Field(foreign_key="users.id", index=True)
     name: str = Field(max_length=255)
-    prompt: str  # TEXT by default
+    prompt: str = Field(default="", sa_column=Column(Text, default=""))
+    mode: str = Field(default="doc", max_length=20)  # "doc" or "design"
     status: str = Field(default="draft", max_length=50)  # generating, draft, shared
-    
+
     # Store array of strings as JSON
     slides_html: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     full_html: str | None = Field(default=None)
     thumbnail_url: str | None = Field(default=None, max_length=500)
+
+    # AI generation fields
+    llms_txt: str | None = Field(default=None, sa_column=Column(Text, nullable=True))
+    ai_json: dict | None = Field(default=None, sa_column=Column(JSON, nullable=True))
+    last_generation_fields_hash: str | None = Field(default=None, max_length=64)
 
     # Relationships
     user: "User" = Relationship(back_populates="projects")
@@ -44,10 +53,11 @@ class ProjectDocument(BaseUUIDModel, table=True):
     __tablename__ = "project_documents"
 
     project_id: UUID = Field(foreign_key="projects.id", index=True)
-    type: str = Field(max_length=100) # product-description, etc.
+    type: str = Field(max_length=100)  # product-description, etc.
     title: str = Field(max_length=255)
-    content: str
-    status: str = Field(default="pending", max_length=50) # generating, ready, error, pending
+    content: str = Field(default="", sa_column=Column(Text, default=""))
+    status: str = Field(default="pending", max_length=50)  # generating, ready, error, pending
+    fields: dict | None = Field(default=None, sa_column=Column(JSON, nullable=True))
 
     # Relationships
     project: "Project" = Relationship(back_populates="documents")

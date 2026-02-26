@@ -1,4 +1,5 @@
 import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -11,6 +12,7 @@ class ChatMessageBase(BaseModel):
 
 class ChatMessageCreate(BaseModel):
     content: str
+    mode: Literal["doc", "design"] = "doc"
 
 
 class ChatMessageRead(ChatMessageBase):
@@ -19,3 +21,11 @@ class ChatMessageRead(ChatMessageBase):
     created_at: datetime.datetime
 
     model_config = {"from_attributes": True}
+
+
+class ChatResponse(BaseModel):
+    message: ChatMessageRead
+    extraction_state: dict
+    all_complete: bool
+    design_generation_triggered: bool
+    project: dict | None = None

@@ -36,4 +36,4 @@ async def send_message(
     Send a message and get an AI response using Pydantic AI.
     Returns a composite object containing the Message and documentsUpdated.
     """
-    return await chat_controller.send_message(user, project_id, payload.content, db)
+    return await chat_controller.send_message(user, project_id, payload.content, payload.mode, db)

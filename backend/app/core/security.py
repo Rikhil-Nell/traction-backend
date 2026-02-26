@@ -110,3 +110,19 @@ async def get_optional_user(
         return user if user and user.is_active else None
     except Exception:
         return None
+
+
+# ── Password hashing (for share-link passwords) ─────────────
+
+def get_password_hash(password: str) -> str:
+    """Hash a password using SHA-256 with a random salt."""
+    import secrets
+    salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((salt + password).encode()).hexdigest()
+    return f"{salt}:{hashed}"
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its salted SHA-256 hash."""
+    salt, hashed = hashed_password.split(":")
+    return hashlib.sha256((salt + plain_password).encode()).hexdigest() == hashed
