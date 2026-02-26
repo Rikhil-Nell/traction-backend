@@ -335,12 +335,18 @@ async def _handle_design_mode(
         "design_generation_triggered": True,
         "project": {
             "id": str(project.id),
+            "user_id": str(project.user_id),
             "name": project.name,
+            "prompt": project.prompt,
+            "mode": project.mode,
             "status": project.status,
+            "slides_html": project.slides_html or [],
             "full_html": project.full_html,
+            "thumbnail_url": project.thumbnail_url,
             "llms_txt": project.llms_txt,
             "ai_json": project.ai_json,
-            "last_generation_fields_hash": project.last_generation_fields_hash,
+            "created_at": project.created_at.isoformat() if project.created_at else None,
+            "updated_at": project.updated_at.isoformat() if project.updated_at else None,
         },
     }
 
