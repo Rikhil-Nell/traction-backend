@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NexShield — Pitch Deck</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- HLS.js -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        cyan: { neon: '#00f0ff' },
+                        magenta: { neon: '#ff0066' },
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100%; height: 100%;
+            overflow: hidden;
+            background: #000000;
+            font-family: 'Inter', sans-serif;
+            color: #e0e0e0;
+        }
+
+        /* ── Neon Heading Style ── */
+        .neon-heading {
+            font-family: 'JetBrains Mono', monospace;
+            color: #00f0ff;
+            text-shadow: 0 0 30px rgba(0,240,255,0.3);
+        }
+
+        .neon-heading-magenta {
+            font-family: 'JetBrains Mono', monospace;
+            color: #ff0066;
+            text-shadow: 0 0 30px rgba(255,0,102,0.3);
+        }
+
+        /* ── Neon Card ── */
+        .neon-card {
+            background: rgba(0,240,255,0.04);
+            border: 1px solid rgba(0,240,255,0.15);
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(0,240,255,0.1), inset 0 0 15px rgba(0,240,255,0.05);
+        }
+
+        .neon-card-magenta {
+            background: rgba(255,0,102,0.04);
+            border: 1px solid rgba(255,0,102,0.15);
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(255,0,102,0.1), inset 0 0 15px rgba(255,0,102,0.05);
+        }
+
+        /* ── Grid Overlay ── */
+        .grid-overlay {
+            background-image:
+                repeating-linear-gradient(0deg, rgba(0,240,255,0.03) 1px, transparent 1px),
+                repeating-linear-gradient(90deg, rgba(0,240,255,0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* ── Monospace Label ── */
+        .mono-label {
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: clamp(0.55rem, 0.8vw, 0.7rem);
+            color: rgba(0,240,255,0.6);
+        }
+
+        .mono-label-magenta {
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: clamp(0.55rem, 0.8vw, 0.7rem);
+            color: rgba(255,0,102,0.6);
+        }
+
+        /* ── Responsive Typography ── */
+        .text-hero    { font-size: clamp(2.5rem, 6vw, 5rem); line-height: 1.05; }
+        .text-title   { font-size: clamp(1.8rem, 4vw, 3.2rem); line-height: 1.15; }
+        .text-subtitle{ font-size: clamp(1rem, 2vw, 1.5rem); line-height: 1.4; }
+        .text-body    { font-size: clamp(0.85rem, 1.2vw, 1.05rem); line-height: 1.6; }
+        .text-stat    { font-size: clamp(1.8rem, 3.5vw, 3rem); line-height: 1.1; }
+        .text-small   { font-size: clamp(0.7rem, 0.9vw, 0.85rem); line-height: 1.5; }
+
+        /* ── Slide System ── */
+        .slide-deck { position: relative; width: 100%; height: 100vh; }
+
+        .slide {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0;
+            transform: scale(1.05);
+            transition: opacity 500ms ease-in-out, transform 500ms ease-in-out;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .slide.active {
+            opacity: 1; transform: scale(1);
+            pointer-events: auto; z-index: 2;
+        }
+
+        .slide.past {
+            opacity: 0; transform: scale(0.95);
+            pointer-events: none; z-index: 1;
+        }
+
+        .slide.future {
+            opacity: 0; transform: scale(1.05);
+            pointer-events: none; z-index: 1;
+        }
+
+        /* ── Video Background ── */
+        .video-bg {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            opacity: 0.12;
+            z-index: 0;
+        }
+
+        .slide-content {
+            position: relative; z-index: 1;
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            padding: clamp(1.5rem, 4vw, 4rem);
+        }
+
+        /* ── Controls Bar ── */
+        .controls-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            z-index: 100;
+            display: flex; align-items: center; justify-content: center; gap: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 400ms, transform 400ms;
+        }
+
+        .controls-bar.visible {
+            opacity: 1; transform: translateY(0);
+        }
+
+        .controls-bar button {
+            background: rgba(0,240,255,0.08);
+            border: 1px solid rgba(0,240,255,0.2);
+            border-radius: 4px;
+            color: #00f0ff;
+            padding: 0.4rem 0.75rem;
+            cursor: pointer;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            transition: background 200ms, box-shadow 200ms;
+        }
+
+        .controls-bar button:hover {
+            background: rgba(0,240,255,0.15);
+            box-shadow: 0 0 10px rgba(0,240,255,0.2);
+        }
+
+        .progress-dots {
+            display: flex; gap: 6px; align-items: center;
+        }
+
+        .progress-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            border: 1px solid rgba(0,240,255,0.3);
+            background: transparent;
+            transition: background 300ms, box-shadow 300ms;
+            cursor: pointer;
+        }
+
+        .progress-dot.active {
+            background: #00f0ff;
+            box-shadow: 0 0 8px rgba(0,240,255,0.5);
+        }
+
+        .slide-counter {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: rgba(0,240,255,0.5);
+        }
+
+        /* ── Keyboard Hint ── */
+        .keyboard-hint {
+            position: fixed; top: 1rem; right: 1.5rem;
+            z-index: 100;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(0,240,255,0.3);
+            letter-spacing: 0.05em;
+            opacity: 0;
+            transition: opacity 400ms;
+        }
+
+        .keyboard-hint.visible { opacity: 1; }
+
+        /* ── Scan Line Animation ── */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
+        }
+
+        .scanline {
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(0,240,255,0.15), transparent);
+            animation: scanline 8s linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* ── Divider Line ── */
+        .neon-divider {
+            width: 60px; height: 2px;
+            background: linear-gradient(90deg, #00f0ff, transparent);
+            box-shadow: 0 0 8px rgba(0,240,255,0.3);
+        }
+
+        .neon-divider-magenta {
+            width: 60px; height: 2px;
+            background: linear-gradient(90deg, #ff0066, transparent);
+            box-shadow: 0 0 8px rgba(255,0,102,0.3);
+        }
+
+        /* ── Stat Value ── */
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            color: #00f0ff;
+            text-shadow: 0 0 20px rgba(0,240,255,0.4);
+        }
+
+        .stat-value-magenta {
+            font-family: 'JetBrains Mono', monospace;
+            color: #ff0066;
+            text-shadow: 0 0 20px rgba(255,0,102,0.4);
+        }
+
+        /* ── Progress Bar Fill ── */
+        .neon-bar {
+            height: 6px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #00f0ff, rgba(0,240,255,0.4));
+            box-shadow: 0 0 8px rgba(0,240,255,0.3);
+        }
+
+        .neon-bar-magenta {
+            height: 6px;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #ff0066, rgba(255,0,102,0.4));
+            box-shadow: 0 0 8px rgba(255,0,102,0.3);
+        }
+
+        /* ── Glow ring for team avatars ── */
+        .avatar-ring {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            border: 2px solid rgba(0,240,255,0.3);
+            box-shadow: 0 0 15px rgba(0,240,255,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            color: #00f0ff;
+            background: rgba(0,240,255,0.06);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- SLIDE DECK                                  -->
+<!-- ════════════════════════════════════════════ -->
+<div class="slide-deck" id="deck">
+
+    <!-- ─── SLIDE 1 : COVER ─── -->
+    <div class="slide active grid-overlay" data-slide="0" data-video="https://stream.mux.com/JNJEOYI6B3EffB9f5ZhpGbuxzc6gSyJcXaCBbCgZKRg.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="flex flex-col items-center text-center max-w-4xl mx-auto">
+                <!-- Logo mark -->
+                <div class="neon-card flex items-center justify-center w-20 h-20 mb-8">
+                    <i data-lucide="shield-check" class="w-10 h-10" style="color:#00f0ff; filter: drop-shadow(0 0 8px rgba(0,240,255,0.4));"></i>
+                </div>
+
+                <h1 class="neon-heading text-hero font-bold tracking-tight mb-6">
+                    NexShield
+                </h1>
+
+                <div class="neon-divider mb-6 mx-auto"></div>
+
+                <p class="text-subtitle font-light" style="color: rgba(255,255,255,0.7);">
+                    Autonomous threat detection for the post-firewall era
+                </p>
+
+                <div class="mt-12 flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full" style="background:#00f0ff; box-shadow:0 0 6px rgba(0,240,255,0.5);"></div>
+                    <span class="mono-label">Presented by Alex Mercer</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 2 : PROBLEM ─── -->
+    <div class="slide future grid-overlay" data-slide="1" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="w-full max-w-5xl mx-auto">
+                <span class="mono-label-magenta mb-3 block">// the problem</span>
+                <h2 class="neon-heading-magenta text-title font-bold mb-2">The Perimeter is Dead</h2>
+                <div class="neon-divider-magenta mb-8"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <!-- Stat Card 1 -->
+                    <div class="neon-card-magenta p-5 flex flex-col items-center text-center">
+                        <i data-lucide="zap" class="w-6 h-6 mb-3" style="color:#ff0066;"></i>
+                        <span class="stat-value-magenta text-stat font-bold">2,200</span>
+                        <span class="mono-label-magenta mt-2">Attacks / Day</span>
+                    </div>
+                    <!-- Stat Card 2 -->
+                    <div class="neon-card-magenta p-5 flex flex-col items-center text-center">
+                        <i data-lucide="clock" class="w-6 h-6 mb-3" style="color:#ff0066;"></i>
+                        <span class="stat-value-magenta text-stat font-bold">287</span>
+                        <span class="mono-label-magenta mt-2">Days Avg Detection</span>
+                    </div>
+                    <!-- Stat Card 3 -->
+                    <div class="neon-card-magenta p-5 flex flex-col items-center text-center">
+                        <i data-lucide="dollar-sign" class="w-6 h-6 mb-3" style="color:#ff0066;"></i>
+                        <span class="stat-value-magenta text-stat font-bold">$4.45M</span>
+                        <span class="mono-label-magenta mt-2">Avg Breach Cost</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="neon-card p-5">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 mt-0.5 flex-shrink-0" style="color:#ff0066;"></i>
+                            <div>
+                                <p class="text-body font-medium" style="color:rgba(255,255,255,0.85);">Legacy SIEM Tools Failing</p>
+                                <p class="text-small mt-1" style="color:rgba(255,255,255,0.5);">Rule-based detection cannot keep pace with polymorphic attacks and zero-day exploits flooding enterprise networks.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="neon-card p-5">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="users" class="w-5 h-5 mt-0.5 flex-shrink-0" style="color:#ff0066;"></i>
+                            <div>
+                                <p class="text-body font-medium" style="color:rgba(255,255,255,0.85);">Talent Shortage</p>
+                                <p class="text-small mt-1" style="color:rgba(255,255,255,0.5);">3.5 million unfilled cybersecurity positions worldwide. SOC teams are overwhelmed and burning out.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 3 : SOLUTION ─── -->
+    <div class="slide future grid-overlay" data-slide="2" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="w-full max-w-5xl mx-auto">
+                <span class="mono-label mb-3 block">// the solution</span>
+                <h2 class="neon-heading text-title font-bold mb-2">AI That Hunts Threats Before They Strike</h2>
+                <div class="neon-divider mb-8"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Feature 1 -->
+                    <div class="neon-card p-5">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded" style="background:rgba(0,240,255,0.08); border:1px solid rgba(0,240,255,0.15);">
+                                <i data-lucide="activity" class="w-5 h-5" style="color:#00f0ff;"></i>
+                            </div>
+                            <div>
+                                <p class="text-body font-semibold" style="color:#00f0ff;">Real-Time Behavioral Analysis</p>
+                                <p class="text-small mt-1" style="color:rgba(255,255,255,0.5);">Continuously monitors network behavior, user patterns, and data flows to detect anomalies invisible to signature-based tools.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Feature 2 -->
+                    <div class="neon-card p-5">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded" style="background:rgba(0,240,255,0.08); border:1px solid rgba(0,240,255,0.15);">
+                                <i data-lucide="eye" class="w-5 h-5" style="color:#00f0ff;"></i>
+                            </div>
+                            <div>
+                                <p class="text-body font-semibold" style="color:#00f0ff;">Zero-Day Detection</p>
+                                <p class="text-small mt-1" style="color:rgba(255,255,255,0.5);">ML models trained on adversarial tactics identify novel attack vectors without prior signatures or IOC databases.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Feature 3 -->
+                    <div class="neon-card p-5">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded" style="background:rgba(0,240,255,0.08); border:1px solid rgba(0,240,255,0.15);">
+                                <i data-lucide="bot" class="w-5 h-5" style="color:#00f0ff;"></i>
+                            </div>
+                            <div>
+                                <p class="text-body font-semibold" style="color:#00f0ff;">Automated Response</p>
+                                <p class="text-small mt-1" style="color:rgba(255,255,255,0.5);">Autonomous containment protocols isolate compromised endpoints and neutralize threats in under 3 minutes.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Feature 4 -->
+                    <div class="neon-card p-5">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded" style="background:rgba(0,240,255,0.08); border:1px solid rgba(0,240,255,0.15);">
+                                <i data-lucide="network" class="w-5 h-5" style="color:#00f0ff;"></i>
+                            </div>
+                            <div>
+                                <p class="text-body font-semibold" style="color:#00f0ff;">Threat Graph Visualization</p>
+                                <p class="text-small mt-1" style="color:rgba(255,255,255,0.5);">Interactive attack-path mapping lets analysts see lateral movement chains, compromised assets, and blast radius in real time.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 4 : MARKET ─── -->
+    <div class="slide future grid-overlay" data-slide="3" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="w-full max-w-5xl mx-auto">
+                <span class="mono-label mb-3 block">// market opportunity</span>
+                <h2 class="neon-heading text-title font-bold mb-2">A Massive &amp; Growing Market</h2>
+                <div class="neon-divider mb-8"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                    <!-- TAM -->
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <span class="mono-label mb-3">TAM</span>
+                        <span class="stat-value text-stat font-bold">$266B</span>
+                        <p class="text-small mt-2" style="color:rgba(255,255,255,0.5);">Global Cybersecurity</p>
+                    </div>
+                    <!-- SAM -->
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <span class="mono-label mb-3">SAM</span>
+                        <span class="stat-value text-stat font-bold">$32B</span>
+                        <p class="text-small mt-2" style="color:rgba(255,255,255,0.5);">AI-Driven Security</p>
+                    </div>
+                    <!-- SOM -->
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <span class="mono-label mb-3">SOM</span>
+                        <span class="stat-value text-stat font-bold">$1.8B</span>
+                        <p class="text-small mt-2" style="color:rgba(255,255,255,0.5);">Autonomous Detection</p>
+                    </div>
+                </div>
+
+                <div class="neon-card p-5 flex items-center gap-5">
+                    <div class="flex-shrink-0">
+                        <i data-lucide="trending-up" class="w-8 h-8" style="color:#00f0ff;"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-body font-semibold" style="color:#00f0ff;">Market CAGR</span>
+                            <span class="stat-value font-bold" style="font-size:clamp(1.2rem,2vw,1.6rem);">18%</span>
+                        </div>
+                        <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                            <div class="neon-bar rounded" style="width:72%;"></div>
+                        </div>
+                        <p class="text-small mt-2" style="color:rgba(255,255,255,0.4);">Rapid enterprise adoption of AI-first security solutions driven by escalating threat landscape.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 5 : TRACTION ─── -->
+    <div class="slide future grid-overlay" data-slide="4" data-video="https://stream.mux.com/4IMYGcL01xjs7ek5ANO17JC4VQVUTsojZlnw4fXzwSxc.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="w-full max-w-5xl mx-auto">
+                <span class="mono-label mb-3 block">// traction</span>
+                <h2 class="neon-heading text-title font-bold mb-2">Proven at Scale</h2>
+                <div class="neon-divider mb-8"></div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="neon-card p-5 flex flex-col items-center text-center">
+                        <i data-lucide="building-2" class="w-5 h-5 mb-2" style="color:#00f0ff;"></i>
+                        <span class="stat-value text-stat font-bold">156</span>
+                        <span class="mono-label mt-2">Enterprise Clients</span>
+                    </div>
+                    <div class="neon-card p-5 flex flex-col items-center text-center">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 mb-2" style="color:#00f0ff;"></i>
+                        <span class="stat-value text-stat font-bold">$4.7M</span>
+                        <span class="mono-label mt-2">ARR</span>
+                    </div>
+                    <div class="neon-card p-5 flex flex-col items-center text-center">
+                        <i data-lucide="target" class="w-5 h-5 mb-2" style="color:#00f0ff;"></i>
+                        <span class="stat-value text-stat font-bold">99.2%</span>
+                        <span class="mono-label mt-2">Detection Rate</span>
+                    </div>
+                    <div class="neon-card p-5 flex flex-col items-center text-center">
+                        <i data-lucide="timer" class="w-5 h-5 mb-2" style="color:#00f0ff;"></i>
+                        <span class="stat-value text-stat font-bold">&lt;3min</span>
+                        <span class="mono-label mt-2">Response Time</span>
+                    </div>
+                </div>
+
+                <div class="neon-card p-4 flex items-center gap-4">
+                    <i data-lucide="shield-check" class="w-6 h-6 flex-shrink-0" style="color:#00f0ff;"></i>
+                    <div>
+                        <span class="text-body font-semibold" style="color:#00f0ff;">SOC 2 Type II Certified</span>
+                        <p class="text-small" style="color:rgba(255,255,255,0.45);">Full compliance with enterprise security and privacy standards. Annual penetration testing by third-party auditors.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 6 : BUSINESS MODEL ─── -->
+    <div class="slide future grid-overlay" data-slide="5" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="w-full max-w-5xl mx-auto">
+                <span class="mono-label mb-3 block">// business model</span>
+                <h2 class="neon-heading text-title font-bold mb-2">SaaS Per-Endpoint Pricing</h2>
+                <div class="neon-divider mb-8"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <span class="mono-label mb-2">Per Endpoint</span>
+                        <span class="stat-value text-stat font-bold">$12</span>
+                        <span class="text-small mt-1" style="color:rgba(255,255,255,0.4);">/endpoint/month</span>
+                    </div>
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <span class="mono-label mb-2">Gross Margin</span>
+                        <span class="stat-value text-stat font-bold">78%</span>
+                        <span class="text-small mt-1" style="color:rgba(255,255,255,0.4);">Software-driven economics</span>
+                    </div>
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <span class="mono-label mb-2">Avg Contract</span>
+                        <span class="stat-value text-stat font-bold">$48K</span>
+                        <span class="text-small mt-1" style="color:rgba(255,255,255,0.4);">/year per customer</span>
+                    </div>
+                </div>
+
+                <div class="neon-card p-5">
+                    <p class="mono-label mb-4">Revenue Levers</p>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-small" style="color:rgba(255,255,255,0.7);">Endpoint Licenses</span>
+                                <span class="text-small font-mono" style="color:#00f0ff;">60%</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                                <div class="neon-bar" style="width:60%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-small" style="color:rgba(255,255,255,0.7);">Threat Intel Add-on</span>
+                                <span class="text-small font-mono" style="color:#00f0ff;">25%</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                                <div class="neon-bar" style="width:25%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-small" style="color:rgba(255,255,255,0.7);">Professional Services</span>
+                                <span class="text-small font-mono" style="color:#00f0ff;">15%</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                                <div class="neon-bar" style="width:15%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 7 : TEAM ─── -->
+    <div class="slide future" data-slide="6" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="w-full max-w-5xl mx-auto">
+                <span class="mono-label mb-3 block">// the team</span>
+                <h2 class="neon-heading text-title font-bold mb-2">Built by Security Veterans</h2>
+                <div class="neon-divider mb-8"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <!-- Alex -->
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <div class="avatar-ring mb-4">AM</div>
+                        <p class="text-body font-bold" style="color:#00f0ff;">Alex Mercer</p>
+                        <span class="mono-label mt-1 mb-3">CEO</span>
+                        <p class="text-small" style="color:rgba(255,255,255,0.5);">Former VP of Engineering at CrowdStrike. Led development of Falcon X threat intelligence platform. 12 years in enterprise security.</p>
+                    </div>
+                    <!-- Yuki -->
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <div class="avatar-ring mb-4">YT</div>
+                        <p class="text-body font-bold" style="color:#00f0ff;">Yuki Tanaka</p>
+                        <span class="mono-label mt-1 mb-3">CTO</span>
+                        <p class="text-small" style="color:rgba(255,255,255,0.5);">Ex-NSA cyber operations. PhD in adversarial machine learning from MIT. Architect of three production threat detection engines.</p>
+                    </div>
+                    <!-- James -->
+                    <div class="neon-card p-6 flex flex-col items-center text-center">
+                        <div class="avatar-ring mb-4">JW</div>
+                        <p class="text-body font-bold" style="color:#00f0ff;">James Wright</p>
+                        <span class="mono-label mt-1 mb-3">CISO</span>
+                        <p class="text-small" style="color:rgba(255,255,255,0.5);">20 years in cybersecurity. Former CISO at two Fortune 500 companies. CISSP, CISM certified. Built SOC programs from ground up.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 8 : ASK ─── -->
+    <div class="slide future grid-overlay" data-slide="7" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="w-full max-w-5xl mx-auto">
+                <span class="mono-label mb-3 block">// the ask</span>
+                <h2 class="neon-heading text-title font-bold mb-2">Series B: $15M</h2>
+                <div class="neon-divider mb-8"></div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left: Big Number -->
+                    <div class="neon-card p-8 flex flex-col items-center justify-center text-center">
+                        <span class="mono-label mb-3">Raising</span>
+                        <span class="stat-value font-bold" style="font-size:clamp(3rem,6vw,5rem);">$15M</span>
+                        <span class="mono-label mt-3">Series B</span>
+                    </div>
+
+                    <!-- Right: Allocation -->
+                    <div class="neon-card p-6">
+                        <p class="mono-label mb-5">Fund Allocation</p>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between mb-1.5">
+                                    <span class="text-body" style="color:rgba(255,255,255,0.8);">Engineering &amp; R&D</span>
+                                    <span class="font-mono text-body" style="color:#00f0ff;">45%</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                                    <div class="neon-bar" style="width:45%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1.5">
+                                    <span class="text-body" style="color:rgba(255,255,255,0.8);">Sales &amp; Marketing</span>
+                                    <span class="font-mono text-body" style="color:#00f0ff;">25%</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                                    <div class="neon-bar" style="width:25%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1.5">
+                                    <span class="text-body" style="color:rgba(255,255,255,0.8);">Infrastructure</span>
+                                    <span class="font-mono text-body" style="color:#00f0ff;">20%</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                                    <div class="neon-bar" style="width:20%;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1.5">
+                                    <span class="text-body" style="color:rgba(255,255,255,0.8);">Compliance &amp; Certs</span>
+                                    <span class="font-mono text-body" style="color:#00f0ff;">10%</span>
+                                </div>
+                                <div class="w-full h-1.5 rounded" style="background:rgba(0,240,255,0.08);">
+                                    <div class="neon-bar" style="width:10%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── SLIDE 9 : VISION ─── -->
+    <div class="slide future grid-overlay" data-slide="8" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+        <video class="video-bg" muted loop playsinline></video>
+        <div class="scanline"></div>
+        <div class="slide-content">
+            <div class="flex flex-col items-center text-center max-w-4xl mx-auto">
+                <span class="mono-label mb-4 block">// the vision</span>
+
+                <h2 class="neon-heading text-hero font-bold mb-4">Making Breaches Extinct</h2>
+                <div class="neon-divider mb-8 mx-auto"></div>
+
+                <p class="text-subtitle font-light mb-10" style="color:rgba(255,255,255,0.6);">
+                    A future where autonomous AI defends every endpoint, every network, every byte -- so human teams can focus on building, not firefighting.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mb-10">
+                    <div class="neon-card p-5 text-center">
+                        <i data-lucide="building-2" class="w-6 h-6 mx-auto mb-2" style="color:#00f0ff;"></i>
+                        <span class="stat-value font-bold" style="font-size:clamp(1.5rem,2.5vw,2.2rem);">1,000</span>
+                        <p class="mono-label mt-1">Enterprises by 2026</p>
+                    </div>
+                    <div class="neon-card p-5 text-center">
+                        <i data-lucide="cpu" class="w-6 h-6 mx-auto mb-2" style="color:#00f0ff;"></i>
+                        <span class="text-body font-semibold" style="color:#00f0ff;">Autonomous SOC</span>
+                        <p class="text-small mt-1" style="color:rgba(255,255,255,0.45);">Fully self-operating security operations center</p>
+                    </div>
+                    <div class="neon-card p-5 text-center">
+                        <i data-lucide="globe" class="w-6 h-6 mx-auto mb-2" style="color:#00f0ff;"></i>
+                        <span class="text-body font-semibold" style="color:#00f0ff;">Global Threat Net</span>
+                        <p class="text-small mt-1" style="color:rgba(255,255,255,0.45);">Shared intelligence network across all clients</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full" style="background:#00f0ff; box-shadow:0 0 6px rgba(0,240,255,0.5);"></div>
+                    <span class="mono-label">nexshield.io</span>
+                    <span class="mono-label" style="color:rgba(0,240,255,0.25);">|</span>
+                    <span class="mono-label">alex@nexshield.io</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- CONTROLS BAR                                -->
+<!-- ════════════════════════════════════════════ -->
+<div class="controls-bar" id="controlsBar">
+    <span class="slide-counter" id="slideCounter">1 / 9</span>
+    <div class="progress-dots" id="progressDots"></div>
+    <button id="btnPrev" aria-label="Previous slide">
+        <i data-lucide="chevron-left" class="w-4 h-4 inline-block"></i>
+    </button>
+    <button id="btnNext" aria-label="Next slide">
+        <i data-lucide="chevron-right" class="w-4 h-4 inline-block"></i>
+    </button>
+    <button id="btnFullscreen" aria-label="Toggle fullscreen">
+        <i data-lucide="maximize" class="w-4 h-4 inline-block"></i>
+    </button>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- KEYBOARD HINT                               -->
+<!-- ════════════════════════════════════════════ -->
+<div class="keyboard-hint" id="keyboardHint">
+    &larr; &rarr; Navigate &middot; F Fullscreen
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- JAVASCRIPT                                  -->
+<!-- ════════════════════════════════════════════ -->
+<script>
+(function () {
+    'use strict';
+
+    // ── Slides ──
+    const slides = document.querySelectorAll('.slide');
+    const totalSlides = slides.length;
+    let currentSlide = 0;
+
+    // ── Controls ──
+    const controlsBar = document.getElementById('controlsBar');
+    const keyboardHint = document.getElementById('keyboardHint');
+    const slideCounter = document.getElementById('slideCounter');
+    const progressDots = document.getElementById('progressDots');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+
+    let hideTimeout = null;
+
+    // ── Build progress dots ──
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+        dot.addEventListener('click', function () { goToSlide(i); });
+        progressDots.appendChild(dot);
+    }
+
+    // ── Navigation ──
+    function goToSlide(index) {
+        if (index < 0 || index >= totalSlides || index === currentSlide) return;
+
+        slides.forEach(function (s, i) {
+            s.classList.remove('active', 'past', 'future');
+            if (i < index) s.classList.add('past');
+            else if (i > index) s.classList.add('future');
+            else s.classList.add('active');
+        });
+
+        currentSlide = index;
+        updateControls();
+        initVideoForSlide(index);
+    }
+
+    function nextSlide() { goToSlide(currentSlide + 1); }
+    function prevSlide() { goToSlide(currentSlide - 1); }
+
+    function updateControls() {
+        slideCounter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+        var dots = progressDots.querySelectorAll('.progress-dot');
+        dots.forEach(function (d, i) {
+            d.classList.toggle('active', i === currentSlide);
+        });
+    }
+
+    // ── Controls Visibility ──
+    function showControls() {
+        controlsBar.classList.add('visible');
+        keyboardHint.classList.add('visible');
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(function () {
+            controlsBar.classList.remove('visible');
+            keyboardHint.classList.remove('visible');
+        }, 3000);
+    }
+
+    document.addEventListener('mousemove', showControls);
+    document.addEventListener('touchstart', showControls);
+
+    // Show controls initially then auto-hide
+    showControls();
+
+    // ── Button Handlers ──
+    btnPrev.addEventListener('click', prevSlide);
+    btnNext.addEventListener('click', nextSlide);
+    btnFullscreen.addEventListener('click', function () {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(function () {});
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    // ── Keyboard Navigation ──
+    document.addEventListener('keydown', function (e) {
+        switch (e.key) {
+            case 'ArrowRight':
+            case ' ':
+                e.preventDefault();
+                nextSlide();
+                showControls();
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                prevSlide();
+                showControls();
+                break;
+            case 'f':
+            case 'F':
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(function () {});
+                } else {
+                    document.exitFullscreen();
+                }
+                break;
+        }
+    });
+
+    // ── HLS Video Initialization ──
+    var hlsInstances = {};
+
+    function initVideoForSlide(index) {
+        var slide = slides[index];
+        var videoUrl = slide.getAttribute('data-video');
+        var video = slide.querySelector('video');
+
+        if (!videoUrl || !video) return;
+        if (video.dataset.hlsLoaded === 'true') {
+            video.play().catch(function () {});
+            return;
+        }
+
+        if (Hls.isSupported()) {
+            // Destroy any existing instance for this slide
+            if (hlsInstances[index]) {
+                hlsInstances[index].destroy();
+            }
+            var hls = new Hls({ enableWorker: true });
+            hls.loadSource(videoUrl);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                video.play().catch(function () {});
+            });
+            hlsInstances[index] = hls;
+            video.dataset.hlsLoaded = 'true';
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Safari native HLS
+            video.src = videoUrl;
+            video.addEventListener('loadedmetadata', function () {
+                video.play().catch(function () {});
+            });
+            video.dataset.hlsLoaded = 'true';
+        }
+    }
+
+    // ── Initialize Lucide Icons ──
+    lucide.createIcons();
+
+    // ── Initialize video for first slide ──
+    initVideoForSlide(0);
+})();
+</script>
+
+</body>
+</html>

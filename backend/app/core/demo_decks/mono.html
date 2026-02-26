@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TYPEHAUS - Pitch Deck</title>
+
+  <!-- Google Fonts: Space Grotesk -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Space Grotesk', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000000;
+      font-family: 'Space Grotesk', sans-serif;
+      color: #ffffff;
+    }
+
+    /* ---- Slide Container ---- */
+    .deck-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* ---- Individual Slide ---- */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(1.05);
+      transition: opacity 500ms ease-in-out, transform 500ms ease-in-out;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .slide.past {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+      z-index: 1;
+    }
+
+    .slide.future {
+      opacity: 0;
+      transform: scale(1.05);
+    }
+
+    /* ---- Video Background ---- */
+    .slide-video-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .slide-video-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.12;
+    }
+
+    .slide-video-overlay {
+      position: absolute;
+      inset: 0;
+      background: #000000;
+      opacity: 0.6;
+      z-index: 1;
+    }
+
+    .slide-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+    }
+
+    /* ---- Typography ---- */
+    .heading-massive {
+      font-size: clamp(40px, 8vw, 140px);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 0.95;
+      color: #ffffff;
+    }
+
+    .heading-large {
+      font-size: clamp(28px, 4vw, 72px);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1.05;
+      color: #ffffff;
+    }
+
+    .heading-medium {
+      font-size: clamp(18px, 2.5vw, 36px);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1.2;
+      color: #ffffff;
+    }
+
+    .text-dim {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .text-bright {
+      color: #ffffff;
+    }
+
+    .mono-hr {
+      border: none;
+      height: 2px;
+      background: #ffffff;
+      width: 100%;
+    }
+
+    .mono-hr-dim {
+      border: none;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.3);
+      width: 100%;
+    }
+
+    /* ---- Brutalist Card ---- */
+    .mono-card {
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      border-radius: 0;
+      background: transparent;
+      padding: 32px;
+    }
+
+    /* ---- Controls Bar ---- */
+    .controls-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(0, 0, 0, 0.9);
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      opacity: 0;
+      transform: translateY(100%);
+      transition: opacity 400ms ease, transform 400ms ease;
+    }
+
+    .controls-bar.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .controls-bar button {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: #ffffff;
+      padding: 8px 16px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: border-color 200ms ease, background 200ms ease;
+      border-radius: 0;
+    }
+
+    .controls-bar button:hover {
+      border-color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 24px;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #ffffff;
+      transition: width 500ms ease-in-out;
+    }
+
+    /* ---- Keyboard Hint ---- */
+    .keyboard-hint {
+      position: fixed;
+      top: 24px;
+      right: 32px;
+      z-index: 100;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.5);
+      opacity: 0;
+      transition: opacity 400ms ease;
+      pointer-events: none;
+    }
+
+    .keyboard-hint.visible {
+      opacity: 1;
+    }
+
+    /* ---- Stat Block ---- */
+    .stat-value {
+      font-size: clamp(28px, 5vw, 64px);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      color: #ffffff;
+    }
+
+    .stat-label {
+      font-size: clamp(11px, 1.2vw, 15px);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 8px;
+    }
+
+    /* ---- Slide Counter ---- */
+    .slide-counter {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 0.06em;
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body>
+
+<div class="deck-container" id="deck">
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 1: COVER -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="0" data-video="https://stream.mux.com/JNJEOYI6B3EffB9f5ZhpGbuxzc6gSyJcXaCBbCgZKRg.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-6xl mx-auto flex flex-col items-center text-center gap-8">
+        <div class="heading-massive" style="font-size: clamp(60px, 12vw, 200px); letter-spacing: 0.15em;">
+          TYPEHAUS
+        </div>
+        <hr class="mono-hr" style="max-width: 120px;" />
+        <p class="text-dim" style="font-size: clamp(16px, 2vw, 28px); font-weight: 400; letter-spacing: 0.04em;">
+          The design tool that designs itself
+        </p>
+        <p class="text-dim" style="font-size: clamp(12px, 1.2vw, 16px); font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 40px;">
+          By Kai Brandt
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 2: PROBLEM -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="1" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 24px;">
+          The Problem
+        </p>
+        <h2 class="heading-massive" style="margin-bottom: 48px;">
+          Design tools<br/>are bloated
+        </h2>
+        <hr class="mono-hr" style="margin-bottom: 48px;" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="mono-card">
+            <p class="text-bright" style="font-size: clamp(14px, 1.4vw, 20px); font-weight: 500;">
+              47 features nobody uses
+            </p>
+            <p class="text-dim" style="font-size: clamp(12px, 1vw, 15px); margin-top: 8px;">
+              Interfaces cluttered with tools that collect dust
+            </p>
+          </div>
+          <div class="mono-card">
+            <p class="text-bright" style="font-size: clamp(14px, 1.4vw, 20px); font-weight: 500;">
+              $600/yr per seat
+            </p>
+            <p class="text-dim" style="font-size: clamp(12px, 1vw, 15px); margin-top: 8px;">
+              Paying premium for features you never open
+            </p>
+          </div>
+          <div class="mono-card">
+            <p class="text-bright" style="font-size: clamp(14px, 1.4vw, 20px); font-weight: 500;">
+              3-month learning curve
+            </p>
+            <p class="text-dim" style="font-size: clamp(12px, 1vw, 15px); margin-top: 8px;">
+              Creative tools that kill creativity before it starts
+            </p>
+          </div>
+          <div class="mono-card">
+            <p class="text-bright" style="font-size: clamp(14px, 1.4vw, 20px); font-weight: 500;">
+              One-size-fits-all
+            </p>
+            <p class="text-dim" style="font-size: clamp(12px, 1vw, 15px); margin-top: 8px;">
+              Every designer gets the same bloated interface
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 3: SOLUTION -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="2" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 24px;">
+          The Solution
+        </p>
+        <h2 class="heading-massive" style="margin-bottom: 16px;">
+          Strip it back.
+        </h2>
+        <h2 class="heading-massive text-dim" style="margin-bottom: 48px;">
+          Build it up.
+        </h2>
+        <hr class="mono-hr" style="margin-bottom: 48px;" />
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
+          <div>
+            <p class="heading-medium" style="margin-bottom: 12px;">AI-Adaptive Interface</p>
+            <p class="text-dim" style="font-size: clamp(13px, 1.2vw, 17px); line-height: 1.6;">
+              Shows only the tools you need, exactly when you need them. The interface reshapes itself around your creative process.
+            </p>
+          </div>
+          <div>
+            <p class="heading-medium" style="margin-bottom: 12px;">Learns Your Workflow</p>
+            <p class="text-dim" style="font-size: clamp(13px, 1.2vw, 17px); line-height: 1.6;">
+              The more you create, the smarter it gets. Your tool adapts to you -- not the other way around.
+            </p>
+          </div>
+          <div>
+            <p class="heading-medium" style="margin-bottom: 12px;">Text to Components</p>
+            <p class="text-dim" style="font-size: clamp(13px, 1.2vw, 17px); line-height: 1.6;">
+              Describe what you need. Typehaus generates production-ready components from natural language.
+            </p>
+          </div>
+          <div>
+            <p class="heading-medium" style="margin-bottom: 12px;">Zero Learning Curve</p>
+            <p class="text-dim" style="font-size: clamp(13px, 1.2vw, 17px); line-height: 1.6;">
+              If you can think it, you can build it. No tutorials, no courses, no certification needed.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 4: MARKET -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="3" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 24px;">
+          Market Opportunity
+        </p>
+        <h2 class="heading-large" style="margin-bottom: 48px;">
+          The market is massive.<br/>
+          <span class="text-dim">And it's moving.</span>
+        </h2>
+        <hr class="mono-hr" style="margin-bottom: 48px;" />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="mono-card flex flex-col items-start">
+            <p class="stat-value">$25B</p>
+            <p class="stat-label">TAM -- Design Tools</p>
+            <hr class="mono-hr-dim" style="margin-top: 20px; margin-bottom: 16px;" />
+            <p class="text-dim" style="font-size: 13px; line-height: 1.5;">
+              Total addressable market for design and creative tools globally
+            </p>
+          </div>
+          <div class="mono-card flex flex-col items-start">
+            <p class="stat-value">$8B</p>
+            <p class="stat-label">SAM -- Professional Design</p>
+            <hr class="mono-hr-dim" style="margin-top: 20px; margin-bottom: 16px;" />
+            <p class="text-dim" style="font-size: 13px; line-height: 1.5;">
+              Serviceable market for professional design software and platforms
+            </p>
+          </div>
+          <div class="mono-card flex flex-col items-start">
+            <p class="stat-value">$400M</p>
+            <p class="stat-label">SOM -- AI-Native Tools</p>
+            <hr class="mono-hr-dim" style="margin-top: 20px; margin-bottom: 16px;" />
+            <p class="text-dim" style="font-size: 13px; line-height: 1.5;">
+              Near-term opportunity in the AI-native design segment
+            </p>
+          </div>
+        </div>
+        <p class="text-dim" style="font-size: clamp(12px, 1vw, 15px); margin-top: 32px; text-transform: uppercase; letter-spacing: 0.1em;">
+          15% CAGR -- Accelerating with AI adoption
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 5: TRACTION -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="4" data-video="https://stream.mux.com/4IMYGcL01xjs7ek5ANO17JC4VQVUTsojZlnw4fXzwSxc.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 24px;">
+          Traction
+        </p>
+        <h2 class="heading-massive" style="margin-bottom: 48px;">
+          Numbers<br/>
+          <span class="text-dim">don't lie.</span>
+        </h2>
+        <hr class="mono-hr" style="margin-bottom: 48px;" />
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+          <div class="mono-card">
+            <p class="stat-value" style="font-size: clamp(24px, 3.5vw, 52px);">12K</p>
+            <p class="stat-label">Beta Users</p>
+          </div>
+          <div class="mono-card">
+            <p class="stat-value" style="font-size: clamp(24px, 3.5vw, 52px);">$890K</p>
+            <p class="stat-label">ARR</p>
+          </div>
+          <div class="mono-card">
+            <p class="stat-value" style="font-size: clamp(24px, 3.5vw, 52px);">4.8</p>
+            <p class="stat-label">Avg Rating / 5</p>
+          </div>
+          <div class="mono-card">
+            <p class="stat-value" style="font-size: clamp(24px, 3.5vw, 52px);">23m</p>
+            <p class="stat-label">Avg Daily Usage</p>
+          </div>
+          <div class="mono-card">
+            <p class="stat-value" style="font-size: clamp(24px, 3.5vw, 52px);">340</p>
+            <p class="stat-label">Enterprise Waitlist</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 6: BUSINESS MODEL -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="5" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 24px;">
+          Business Model
+        </p>
+        <h2 class="heading-large" style="margin-bottom: 48px;">
+          Simple pricing.<br/>
+          <span class="text-dim">Serious margins.</span>
+        </h2>
+        <hr class="mono-hr" style="margin-bottom: 48px;" />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="mono-card flex flex-col gap-4">
+            <p class="heading-medium">Free</p>
+            <hr class="mono-hr-dim" />
+            <p class="stat-value" style="font-size: clamp(20px, 3vw, 40px);">$0</p>
+            <p class="text-dim" style="font-size: 14px; line-height: 1.6;">
+              Core tools, limited projects. Gateway to the platform.
+            </p>
+          </div>
+          <div class="mono-card flex flex-col gap-4" style="border-color: #ffffff;">
+            <p class="heading-medium">Pro</p>
+            <hr class="mono-hr" />
+            <p class="stat-value" style="font-size: clamp(20px, 3vw, 40px);">$19<span class="text-dim" style="font-size: 16px;">/mo</span></p>
+            <p class="text-dim" style="font-size: 14px; line-height: 1.6;">
+              Full AI features, unlimited projects, priority generation.
+            </p>
+          </div>
+          <div class="mono-card flex flex-col gap-4">
+            <p class="heading-medium">Team</p>
+            <hr class="mono-hr-dim" />
+            <p class="stat-value" style="font-size: clamp(20px, 3vw, 40px);">$39<span class="text-dim" style="font-size: 16px;">/seat/mo</span></p>
+            <p class="text-dim" style="font-size: 14px; line-height: 1.6;">
+              Collaboration, shared libraries, admin controls.
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-12 mt-12 items-center">
+          <div>
+            <p class="stat-value" style="font-size: clamp(20px, 3vw, 44px);">82%</p>
+            <p class="stat-label">Gross Margins</p>
+          </div>
+          <div>
+            <p class="text-dim" style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em;">
+              Enterprise: Custom pricing available
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 7: TEAM -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="6" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 24px;">
+          The Team
+        </p>
+        <h2 class="heading-large" style="margin-bottom: 48px;">
+          Built by people who<br/>
+          <span class="text-dim">build design tools.</span>
+        </h2>
+        <hr class="mono-hr" style="margin-bottom: 48px;" />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="mono-card flex flex-col gap-4">
+            <p class="heading-medium" style="font-size: clamp(20px, 2.5vw, 32px);">Kai Brandt</p>
+            <p class="text-bright" style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;">
+              CEO
+            </p>
+            <hr class="mono-hr-dim" />
+            <p class="text-dim" style="font-size: 14px; line-height: 1.6;">
+              Ex-Figma. Led product for 3 years. Shipped features used by 4M+ designers.
+            </p>
+          </div>
+          <div class="mono-card flex flex-col gap-4">
+            <p class="heading-medium" style="font-size: clamp(20px, 2.5vw, 32px);">Nina Volkov</p>
+            <p class="text-bright" style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;">
+              CTO
+            </p>
+            <hr class="mono-hr-dim" />
+            <p class="text-dim" style="font-size: 14px; line-height: 1.6;">
+              Ex-Adobe. Built the rendering engine behind Creative Cloud. ML/AI specialist.
+            </p>
+          </div>
+          <div class="mono-card flex flex-col gap-4">
+            <p class="heading-medium" style="font-size: clamp(20px, 2.5vw, 32px);">Tom Park</p>
+            <p class="text-bright" style="font-size: 14px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;">
+              CDO
+            </p>
+            <hr class="mono-hr-dim" />
+            <p class="text-dim" style="font-size: 14px; line-height: 1.6;">
+              Ex-Stripe design lead. Defined the visual language of modern fintech. Systems thinker.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 8: ASK -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="7" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 24px;">
+          The Ask
+        </p>
+        <h2 class="heading-massive" style="margin-bottom: 16px;">
+          $6M
+        </h2>
+        <p class="heading-medium text-dim" style="margin-bottom: 48px;">Seed Round</p>
+        <hr class="mono-hr" style="margin-bottom: 48px;" />
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div class="mono-card flex flex-col gap-3">
+            <p class="stat-value" style="font-size: clamp(24px, 4vw, 56px);">50%</p>
+            <p class="stat-label">Engineering</p>
+            <hr class="mono-hr-dim" />
+            <p class="text-dim" style="font-size: 13px;">Core platform, AI models, infrastructure</p>
+          </div>
+          <div class="mono-card flex flex-col gap-3">
+            <p class="stat-value" style="font-size: clamp(24px, 4vw, 56px);">25%</p>
+            <p class="stat-label">Growth</p>
+            <hr class="mono-hr-dim" />
+            <p class="text-dim" style="font-size: 13px;">Marketing, community, user acquisition</p>
+          </div>
+          <div class="mono-card flex flex-col gap-3">
+            <p class="stat-value" style="font-size: clamp(24px, 4vw, 56px);">15%</p>
+            <p class="stat-label">Design Research</p>
+            <hr class="mono-hr-dim" />
+            <p class="text-dim" style="font-size: 13px;">User studies, AI training data, UX</p>
+          </div>
+          <div class="mono-card flex flex-col gap-3">
+            <p class="stat-value" style="font-size: clamp(24px, 4vw, 56px);">10%</p>
+            <p class="stat-label">Operations</p>
+            <hr class="mono-hr-dim" />
+            <p class="text-dim" style="font-size: 13px;">Legal, finance, admin overhead</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 9: VISION -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-slide="8" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="slide-video-bg">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-6xl mx-auto flex flex-col items-center text-center gap-8">
+        <p class="text-dim" style="font-size: clamp(11px, 1vw, 14px); font-weight: 500; text-transform: uppercase; letter-spacing: 0.15em;">
+          The Vision
+        </p>
+        <h2 class="heading-massive">
+          Design without<br/>designers.
+        </h2>
+        <h2 class="heading-massive text-dim">
+          Designers without<br/>limits.
+        </h2>
+        <hr class="mono-hr" style="max-width: 120px;" />
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8 w-full max-w-4xl">
+          <div class="mono-card text-left">
+            <p class="stat-value" style="font-size: clamp(20px, 3vw, 40px);">100K</p>
+            <p class="stat-label">Users by 2026</p>
+          </div>
+          <div class="mono-card text-left">
+            <p class="text-bright" style="font-size: clamp(14px, 1.4vw, 20px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">AI Design System</p>
+            <p class="stat-label">Marketplace</p>
+          </div>
+          <div class="mono-card text-left">
+            <p class="text-bright" style="font-size: clamp(14px, 1.4vw, 20px); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Creative AI</p>
+            <p class="stat-label">Platform</p>
+          </div>
+        </div>
+        <p class="text-dim" style="font-size: clamp(12px, 1vw, 15px); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 32px;">
+          typehaus.design
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- CONTROLS BAR -->
+<!-- ============================================================ -->
+<div class="controls-bar" id="controlsBar">
+  <button id="prevBtn" onclick="navigateSlide(-1)">Prev</button>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <span class="slide-counter" id="slideCounter">01 / 09</span>
+  <button id="nextBtn" onclick="navigateSlide(1)" style="margin-left: 16px;">Next</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- KEYBOARD HINT -->
+<!-- ============================================================ -->
+<div class="keyboard-hint" id="keyboardHint">
+  &larr; &rarr; Navigate &middot; F Fullscreen
+</div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT -->
+<!-- ============================================================ -->
+<script>
+(function () {
+  'use strict';
+
+  // ---- State ----
+  let currentSlide = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  const controlsBar = document.getElementById('controlsBar');
+  const keyboardHint = document.getElementById('keyboardHint');
+  const progressFill = document.getElementById('progressFill');
+  const slideCounter = document.getElementById('slideCounter');
+
+  let hideControlsTimer = null;
+  const hlsInstances = new Map();
+
+  // ---- Initialize Slides ----
+  function initSlides() {
+    slides.forEach((slide, i) => {
+      if (i === 0) {
+        slide.classList.remove('future');
+        slide.classList.add('active');
+      } else {
+        slide.classList.remove('active', 'past');
+        slide.classList.add('future');
+      }
+    });
+    updateProgress();
+    initAllVideos();
+  }
+
+  // ---- Slide Navigation ----
+  function navigateSlide(direction) {
+    const newIndex = currentSlide + direction;
+    if (newIndex < 0 || newIndex >= totalSlides) return;
+    goToSlide(newIndex);
+  }
+  window.navigateSlide = navigateSlide;
+
+  function goToSlide(index) {
+    if (index === currentSlide) return;
+    if (index < 0 || index >= totalSlides) return;
+
+    slides.forEach((slide, i) => {
+      slide.classList.remove('active', 'past', 'future');
+      if (i < index) {
+        slide.classList.add('past');
+      } else if (i === index) {
+        slide.classList.add('active');
+      } else {
+        slide.classList.add('future');
+      }
+    });
+
+    currentSlide = index;
+    updateProgress();
+
+    // Play the active video, pause others
+    slides.forEach((slide, i) => {
+      const video = slide.querySelector('video');
+      if (!video) return;
+      if (i === index) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }
+
+  function updateProgress() {
+    const pct = ((currentSlide) / (totalSlides - 1)) * 100;
+    progressFill.style.width = pct + '%';
+    const num = String(currentSlide + 1).padStart(2, '0');
+    const total = String(totalSlides).padStart(2, '0');
+    slideCounter.textContent = num + ' / ' + total;
+  }
+
+  // ---- Keyboard Navigation ----
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      navigateSlide(1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      navigateSlide(-1);
+    } else if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      toggleFullscreen();
+    }
+  });
+
+  // ---- Fullscreen ----
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  // ---- Auto-hide Controls ----
+  function showControls() {
+    controlsBar.classList.add('visible');
+    keyboardHint.classList.add('visible');
+    clearTimeout(hideControlsTimer);
+    hideControlsTimer = setTimeout(hideControls, 3000);
+  }
+
+  function hideControls() {
+    controlsBar.classList.remove('visible');
+    keyboardHint.classList.remove('visible');
+  }
+
+  document.addEventListener('mousemove', showControls);
+  document.addEventListener('mousedown', showControls);
+  document.addEventListener('touchstart', showControls);
+
+  // Show controls initially, then auto-hide
+  showControls();
+
+  // ---- HLS Video Initialization ----
+  function initHlsVideo(videoEl, src) {
+    if (!src) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+      });
+      hls.loadSource(src);
+      hls.attachMedia(videoEl);
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        // Only autoplay if this video's slide is active
+        const slide = videoEl.closest('.slide');
+        if (slide && slide.classList.contains('active')) {
+          videoEl.play().catch(() => {});
+        }
+      });
+      hlsInstances.set(videoEl, hls);
+    } else if (videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari native HLS
+      videoEl.src = src;
+      videoEl.addEventListener('loadedmetadata', function () {
+        const slide = videoEl.closest('.slide');
+        if (slide && slide.classList.contains('active')) {
+          videoEl.play().catch(() => {});
+        }
+      });
+    }
+  }
+
+  function initAllVideos() {
+    slides.forEach(function (slide) {
+      const videoSrc = slide.getAttribute('data-video');
+      const videoEl = slide.querySelector('video');
+      if (videoEl && videoSrc) {
+        initHlsVideo(videoEl, videoSrc);
+      }
+    });
+  }
+
+  // ---- Touch / Swipe Support ----
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  document.addEventListener('touchstart', function (e) {
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function (e) {
+    const dx = e.changedTouches[0].screenX - touchStartX;
+    const dy = e.changedTouches[0].screenY - touchStartY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+      if (dx < 0) {
+        navigateSlide(1);
+      } else {
+        navigateSlide(-1);
+      }
+    }
+  }, { passive: true });
+
+  // ---- Init ----
+  initSlides();
+
+  // Initialize lucide icons
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+
+})();
+</script>
+
+</body>
+</html>

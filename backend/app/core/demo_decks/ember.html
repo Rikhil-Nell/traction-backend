@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solara Energy — Pitch Deck</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- HLS.js -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            heading: ['"Playfair Display"', 'Georgia', 'serif'],
+            body: ['"Inter"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            ember: {
+              bg: '#0f0a05',
+              accent: '#c9a84c',
+              accentLight: '#e0c978',
+              accentDim: '#8a7234',
+              card: 'rgba(200,160,80,0.08)',
+              cardEdge: 'rgba(200,160,80,0.12)',
+              warm: '#1a1209',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #0f0a05;
+      color: #fff;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    /* ---- Slide Deck Container ---- */
+    #deck {
+      position: relative;
+      width: 100%; height: 100vh;
+      overflow: hidden;
+      background: #0f0a05;
+    }
+
+    /* ---- Individual Slide ---- */
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: scale(1.05);
+      transition: opacity 500ms ease-in-out, transform 500ms ease-in-out;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+      z-index: 2;
+    }
+    .slide.past {
+      opacity: 0;
+      transform: scale(0.95);
+      z-index: 1;
+    }
+    .slide.future {
+      opacity: 0;
+      transform: scale(1.05);
+      z-index: 1;
+    }
+
+    /* ---- Video Background ---- */
+    .slide-video-wrap {
+      position: absolute; inset: 0; z-index: 0;
+      overflow: hidden;
+    }
+    .slide-video-wrap video {
+      position: absolute;
+      top: 50%; left: 50%;
+      min-width: 100%; min-height: 100%;
+      width: auto; height: auto;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+    }
+    .slide-video-overlay {
+      position: absolute; inset: 0;
+      background: rgba(15,10,5,0.3);
+      z-index: 1;
+    }
+    .slide-gradient-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(15,10,5,0.7) 0%, rgba(15,10,5,0.4) 40%, rgba(15,10,5,0.8) 100%);
+      z-index: 2;
+    }
+
+    /* ---- Slide Content ---- */
+    .slide-content {
+      position: relative;
+      z-index: 3;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(1.5rem, 4vw, 3rem);
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* ---- Liquid Glass Card ---- */
+    .glass-card {
+      position: relative;
+      background: linear-gradient(135deg, rgba(200,160,80,0.08) 0%, rgba(200,160,80,0.03) 100%);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border: 1px solid rgba(200,160,80,0.12);
+      border-radius: 16px;
+      padding: clamp(1.25rem, 3vw, 2rem);
+      overflow: hidden;
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: -40%; left: -40%;
+      width: 80%; height: 80%;
+      background: radial-gradient(circle, rgba(255,200,100,0.12) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glass-card > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .glass-card-sm {
+      position: relative;
+      background: linear-gradient(135deg, rgba(200,160,80,0.06) 0%, rgba(200,160,80,0.02) 100%);
+      backdrop-filter: blur(16px) saturate(1.2);
+      -webkit-backdrop-filter: blur(16px) saturate(1.2);
+      border: 1px solid rgba(200,160,80,0.10);
+      border-radius: 12px;
+      padding: clamp(0.75rem, 2vw, 1.25rem);
+      overflow: hidden;
+    }
+    .glass-card-sm::before {
+      content: '';
+      position: absolute;
+      top: -30%; left: -30%;
+      width: 60%; height: 60%;
+      background: radial-gradient(circle, rgba(255,200,100,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glass-card-sm > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ---- Typography ---- */
+    .heading-xl {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2.2rem, 5vw, 4.5rem);
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .heading-lg {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.6rem, 3.5vw, 3rem);
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      color: #fff;
+    }
+    .heading-md {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.1rem, 2vw, 1.75rem);
+      font-weight: 500;
+      line-height: 1.2;
+      color: #fff;
+    }
+    .heading-sm {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(0.95rem, 1.4vw, 1.25rem);
+      font-weight: 500;
+      line-height: 1.3;
+      color: #fff;
+    }
+    .body-lg {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: clamp(0.95rem, 1.4vw, 1.2rem);
+      font-weight: 300;
+      line-height: 1.65;
+      color: rgba(255,255,255,0.8);
+    }
+    .body-md {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: clamp(0.8rem, 1.1vw, 1rem);
+      font-weight: 400;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.75);
+    }
+    .body-sm {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: clamp(0.7rem, 0.9vw, 0.85rem);
+      font-weight: 400;
+      line-height: 1.5;
+      color: rgba(255,255,255,0.6);
+    }
+    .label {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: clamp(0.65rem, 0.8vw, 0.75rem);
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #c9a84c;
+    }
+    .accent { color: #c9a84c; }
+    .accent-line {
+      width: 48px; height: 2px;
+      background: linear-gradient(90deg, #c9a84c, transparent);
+    }
+
+    /* ---- Slide Header ---- */
+    .slide-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: clamp(1rem, 2vw, 2rem);
+      flex-shrink: 0;
+    }
+    .logo-mark {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .logo-mark .icon-wrap {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #c9a84c, #8a7234);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .page-num {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: clamp(0.7rem, 0.9vw, 0.8rem);
+      color: rgba(255,255,255,0.35);
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ---- Stat Block ---- */
+    .stat-value {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.8rem, 3.5vw, 3rem);
+      font-weight: 700;
+      color: #c9a84c;
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: clamp(0.7rem, 0.9vw, 0.85rem);
+      font-weight: 400;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.35rem;
+    }
+
+    /* ---- Controls Bar ---- */
+    #controls {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      background: linear-gradient(0deg, rgba(15,10,5,0.95) 0%, transparent 100%);
+      opacity: 1;
+      transition: opacity 400ms ease;
+    }
+    #controls.hidden { opacity: 0; pointer-events: none; }
+
+    .ctrl-btn {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(200,160,80,0.2);
+      background: rgba(200,160,80,0.08);
+      color: rgba(255,255,255,0.7);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 200ms ease;
+    }
+    .ctrl-btn:hover {
+      background: rgba(200,160,80,0.18);
+      border-color: rgba(200,160,80,0.35);
+      color: #fff;
+    }
+
+    .progress-dots {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .progress-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: rgba(200,160,80,0.2);
+      transition: all 300ms ease;
+      cursor: pointer;
+    }
+    .progress-dot.active {
+      background: #c9a84c;
+      box-shadow: 0 0 8px rgba(201,168,76,0.5);
+      transform: scale(1.25);
+    }
+
+    .slide-counter {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.45);
+      font-variant-numeric: tabular-nums;
+      min-width: 3rem;
+      text-align: center;
+    }
+
+    /* ---- Keyboard Hint ---- */
+    #kb-hint {
+      position: fixed;
+      top: 1rem; right: 1.5rem;
+      z-index: 100;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.3);
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 400ms ease;
+    }
+    #kb-hint.hidden { opacity: 0; }
+
+    /* ---- Team Avatar ---- */
+    .avatar-circle {
+      width: clamp(48px, 6vw, 72px);
+      height: clamp(48px, 6vw, 72px);
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(200,160,80,0.25), rgba(200,160,80,0.08));
+      border: 1px solid rgba(200,160,80,0.2);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ---- Allocation Bar ---- */
+    .alloc-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(200,160,80,0.12);
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    .alloc-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #c9a84c, #e0c978);
+      transition: width 800ms ease;
+    }
+
+    /* ---- Cover special ---- */
+    .cover-subtitle {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      font-weight: 400;
+      font-style: italic;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.5;
+    }
+
+    /* Scrollbar hide for content overflow */
+    .scroll-content {
+      overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .scroll-content::-webkit-scrollbar { display: none; }
+
+    /* Grid helpers */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(0.75rem, 1.5vw, 1.25rem); }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.75rem, 1.5vw, 1.25rem); }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(0.75rem, 1.5vw, 1rem); }
+
+    @media (max-width: 768px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- ==================== SLIDE 1: COVER ==================== -->
+  <div class="slide active" data-video="https://stream.mux.com/JNJEOYI6B3EffB9f5ZhpGbuxzc6gSyJcXaCBbCgZKRg.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content" style="justify-content: center; align-items: center; text-align: center;">
+      <div class="slide-header" style="position: absolute; top: 0; left: 0; right: 0; padding: clamp(1.5rem, 4vw, 3rem);">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">01 / 09</div>
+      </div>
+
+      <div style="max-width: 800px;">
+        <div class="label" style="margin-bottom: 1.5rem; letter-spacing: 0.2em;">Investor Presentation 2025</div>
+        <div class="accent-line" style="margin: 0 auto 2rem auto;"></div>
+        <h1 class="heading-xl" style="margin-bottom: 1.25rem;">Solara <span class="accent">Energy</span></h1>
+        <p class="cover-subtitle" style="margin-bottom: 2.5rem;">Powering tomorrow with intelligent solar infrastructure</p>
+        <div class="glass-card" style="display: inline-block; padding: 0.75rem 2rem;">
+          <span class="body-md" style="color: rgba(255,255,255,0.7);">
+            <span style="color:#c9a84c;">Founded by</span> Elena Rodriguez
+          </span>
+        </div>
+      </div>
+
+      <div style="position: absolute; bottom: clamp(3rem, 5vw, 5rem); left: 50%; transform: translateX(-50%);">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:0.5rem; opacity:0.4;">
+          <span class="body-sm">Scroll to explore</span>
+          <i data-lucide="chevron-down" style="width:16px;height:16px;color:#c9a84c;"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 2: PROBLEM ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content scroll-content">
+      <div class="slide-header">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">02 / 09</div>
+      </div>
+
+      <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; gap: clamp(1.25rem, 2.5vw, 2rem);">
+        <div>
+          <div class="label" style="margin-bottom: 0.75rem;">The Problem</div>
+          <div class="accent-line" style="margin-bottom: 1rem;"></div>
+          <h2 class="heading-lg">The Grid is <span class="accent">Failing</span> Us</h2>
+        </div>
+
+        <div class="glass-card" style="max-width: 640px;">
+          <p class="body-lg">The global energy infrastructure was designed for a different era. As demand surges and climate pressures mount, legacy systems are buckling under the weight of inefficiency.</p>
+        </div>
+
+        <div class="grid-3" style="margin-top: 0.5rem;">
+          <div class="glass-card-sm" style="text-align:center;">
+            <div style="margin-bottom:0.75rem;"><i data-lucide="trending-up" style="width:28px;height:28px;color:#c9a84c;"></i></div>
+            <div class="heading-sm" style="color:#c9a84c; margin-bottom:0.35rem;">Rising Costs</div>
+            <p class="body-sm">Energy prices have increased 47% in the last decade for commercial buildings</p>
+          </div>
+          <div class="glass-card-sm" style="text-align:center;">
+            <div style="margin-bottom:0.75rem;"><i data-lucide="alert-triangle" style="width:28px;height:28px;color:#c9a84c;"></i></div>
+            <div class="heading-sm" style="color:#c9a84c; margin-bottom:0.35rem;">Aging Infrastructure</div>
+            <p class="body-sm">70% of the U.S. grid is over 25 years old, leading to frequent failures</p>
+          </div>
+          <div class="glass-card-sm" style="text-align:center;">
+            <div style="margin-bottom:0.75rem;"><i data-lucide="flame" style="width:28px;height:28px;color:#c9a84c;"></i></div>
+            <div class="heading-sm" style="color:#c9a84c; margin-bottom:0.35rem;">40% Energy Waste</div>
+            <p class="body-sm">Nearly half of generated energy is lost to inefficient distribution and consumption</p>
+          </div>
+        </div>
+
+        <div class="grid-2" style="max-width: 800px;">
+          <div class="glass-card-sm" style="display:flex; align-items:center; gap:1rem;">
+            <i data-lucide="cloud" style="width:24px;height:24px;color:#c9a84c;flex-shrink:0;"></i>
+            <div>
+              <div class="heading-sm" style="font-size: clamp(0.85rem, 1.1vw, 1rem);">Carbon Emissions</div>
+              <p class="body-sm">Energy sector accounts for 73% of global greenhouse gas emissions</p>
+            </div>
+          </div>
+          <div class="glass-card-sm" style="display:flex; align-items:center; gap:1rem;">
+            <i data-lucide="zap-off" style="width:24px;height:24px;color:#c9a84c;flex-shrink:0;"></i>
+            <div>
+              <div class="heading-sm" style="font-size: clamp(0.85rem, 1.1vw, 1rem);">Grid Unreliability</div>
+              <p class="body-sm">Power outages cost U.S. businesses $150 billion annually</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 3: SOLUTION ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content scroll-content">
+      <div class="slide-header">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">03 / 09</div>
+      </div>
+
+      <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; gap: clamp(1.25rem, 2.5vw, 2rem);">
+        <div>
+          <div class="label" style="margin-bottom: 0.75rem;">Our Solution</div>
+          <div class="accent-line" style="margin-bottom: 1rem;"></div>
+          <h2 class="heading-lg">Smart Solar That <span class="accent">Thinks Ahead</span></h2>
+        </div>
+
+        <div class="glass-card" style="max-width: 640px;">
+          <p class="body-lg">Solara combines AI-driven optimization with next-generation solar hardware to create self-learning energy systems that adapt in real-time to weather, demand, and grid conditions.</p>
+        </div>
+
+        <div class="grid-2">
+          <div class="glass-card-sm" style="display:flex; gap:1rem; align-items:flex-start;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(200,160,80,0.2),rgba(200,160,80,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="brain" style="width:20px;height:20px;color:#c9a84c;"></i>
+            </div>
+            <div>
+              <div class="heading-sm" style="margin-bottom:0.25rem;">AI-Optimized Placement</div>
+              <p class="body-sm">Machine learning algorithms analyze terrain, sun patterns, and building geometry to maximize energy capture by up to 34%.</p>
+            </div>
+          </div>
+          <div class="glass-card-sm" style="display:flex; gap:1rem; align-items:flex-start;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(200,160,80,0.2),rgba(200,160,80,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="activity" style="width:20px;height:20px;color:#c9a84c;"></i>
+            </div>
+            <div>
+              <div class="heading-sm" style="margin-bottom:0.25rem;">Predictive Maintenance</div>
+              <p class="body-sm">Sensors detect degradation before failures occur, reducing downtime by 92% and extending panel lifespan by 5+ years.</p>
+            </div>
+          </div>
+          <div class="glass-card-sm" style="display:flex; gap:1rem; align-items:flex-start;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(200,160,80,0.2),rgba(200,160,80,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="battery-charging" style="width:20px;height:20px;color:#c9a84c;"></i>
+            </div>
+            <div>
+              <div class="heading-sm" style="margin-bottom:0.25rem;">Battery Storage Orchestration</div>
+              <p class="body-sm">Intelligent charge/discharge cycles based on time-of-use pricing and demand forecasting to minimize costs.</p>
+            </div>
+          </div>
+          <div class="glass-card-sm" style="display:flex; gap:1rem; align-items:flex-start;">
+            <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(200,160,80,0.2),rgba(200,160,80,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="network" style="width:20px;height:20px;color:#c9a84c;"></i>
+            </div>
+            <div>
+              <div class="heading-sm" style="margin-bottom:0.25rem;">Grid Integration</div>
+              <p class="body-sm">Seamless two-way grid connectivity allows selling excess energy back and provides grid stabilization services.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 4: MARKET ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content scroll-content">
+      <div class="slide-header">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">04 / 09</div>
+      </div>
+
+      <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; gap: clamp(1.25rem, 2.5vw, 2rem);">
+        <div>
+          <div class="label" style="margin-bottom: 0.75rem;">Market Opportunity</div>
+          <div class="accent-line" style="margin-bottom: 1rem;"></div>
+          <h2 class="heading-lg">A <span class="accent">$380B</span> Opportunity</h2>
+        </div>
+
+        <div class="grid-3">
+          <div class="glass-card" style="text-align:center;">
+            <div class="label" style="margin-bottom:0.75rem;">Total Addressable Market</div>
+            <div class="stat-value">$380B</div>
+            <div class="stat-label">Global solar energy market</div>
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(200,160,80,0.1);">
+              <p class="body-sm">Includes residential, commercial, and utility-scale solar installations worldwide</p>
+            </div>
+          </div>
+          <div class="glass-card" style="text-align:center;">
+            <div class="label" style="margin-bottom:0.75rem;">Serviceable Addressable Market</div>
+            <div class="stat-value">$45B</div>
+            <div class="stat-label">Commercial solar segment</div>
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(200,160,80,0.1);">
+              <p class="body-sm">Mid-to-large commercial buildings in North America and Europe</p>
+            </div>
+          </div>
+          <div class="glass-card" style="text-align:center;">
+            <div class="label" style="margin-bottom:0.75rem;">Serviceable Obtainable Market</div>
+            <div class="stat-value">$2.8B</div>
+            <div class="stat-label">Intelligent solar systems</div>
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(200,160,80,0.1);">
+              <p class="body-sm">AI-optimized commercial solar with smart monitoring and battery orchestration</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="max-width: 420px;">
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(200,160,80,0.2),rgba(200,160,80,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="trending-up" style="width:24px;height:24px;color:#c9a84c;"></i>
+            </div>
+            <div>
+              <div class="stat-value" style="font-size:clamp(1.5rem,2.5vw,2.25rem);">25%</div>
+              <div class="stat-label">Compound annual growth rate projected through 2032</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 5: TRACTION ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/4IMYGcL01xjs7ek5ANO17JC4VQVUTsojZlnw4fXzwSxc.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content scroll-content">
+      <div class="slide-header">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">05 / 09</div>
+      </div>
+
+      <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; gap: clamp(1.25rem, 2.5vw, 2rem);">
+        <div>
+          <div class="label" style="margin-bottom: 0.75rem;">Traction</div>
+          <div class="accent-line" style="margin-bottom: 1rem;"></div>
+          <h2 class="heading-lg">Proven <span class="accent">Momentum</span></h2>
+        </div>
+
+        <div class="grid-4" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="glass-card" style="text-align:center;">
+            <div style="margin-bottom:0.5rem;"><i data-lucide="building-2" style="width:24px;height:24px;color:#c9a84c;"></i></div>
+            <div class="stat-value" style="font-size:clamp(1.5rem,3vw,2.5rem);">47</div>
+            <div class="stat-label">Commercial installations deployed and operational</div>
+          </div>
+          <div class="glass-card" style="text-align:center;">
+            <div style="margin-bottom:0.5rem;"><i data-lucide="dollar-sign" style="width:24px;height:24px;color:#c9a84c;"></i></div>
+            <div class="stat-value" style="font-size:clamp(1.5rem,3vw,2.5rem);">$2.3M</div>
+            <div class="stat-label">Annual recurring revenue</div>
+          </div>
+          <div class="glass-card" style="text-align:center;">
+            <div style="margin-bottom:0.5rem;"><i data-lucide="zap" style="width:24px;height:24px;color:#c9a84c;"></i></div>
+            <div class="stat-value" style="font-size:clamp(1.5rem,3vw,2.5rem);">34%</div>
+            <div class="stat-label">Average energy savings for customers</div>
+          </div>
+          <div class="glass-card" style="text-align:center;">
+            <div style="margin-bottom:0.5rem;"><i data-lucide="check-circle" style="width:24px;height:24px;color:#c9a84c;"></i></div>
+            <div class="stat-value" style="font-size:clamp(1.5rem,3vw,2.5rem);">98.7%</div>
+            <div class="stat-label">System uptime across all installations</div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="max-width: 600px;">
+          <div style="display:flex; align-items:center; gap:1.25rem;">
+            <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(200,160,80,0.2),rgba(200,160,80,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="rocket" style="width:24px;height:24px;color:#c9a84c;"></i>
+            </div>
+            <div>
+              <div class="heading-sm" style="margin-bottom:0.25rem;">12 Enterprise Pilots</div>
+              <p class="body-md">Currently running pilot programs with Fortune 500 companies including major retail chains and data center operators.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card-sm" style="max-width:600px; border-left: 2px solid #c9a84c; border-radius: 0 12px 12px 0;">
+          <p class="body-md" style="font-style:italic; color:rgba(255,255,255,0.7);">"Solara's system reduced our energy costs by 41% in the first quarter. The AI optimization is genuinely impressive."</p>
+          <p class="body-sm" style="margin-top:0.5rem; color:#c9a84c;">-- VP of Operations, Major Retail Chain</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 6: BUSINESS MODEL ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content scroll-content">
+      <div class="slide-header">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">06 / 09</div>
+      </div>
+
+      <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; gap: clamp(1.25rem, 2.5vw, 2rem);">
+        <div>
+          <div class="label" style="margin-bottom: 0.75rem;">Business Model</div>
+          <div class="accent-line" style="margin-bottom: 1rem;"></div>
+          <h2 class="heading-lg"><span class="accent">Hardware</span> + SaaS</h2>
+        </div>
+
+        <div class="grid-2" style="max-width: 900px;">
+          <div class="glass-card">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(200,160,80,0.25),rgba(200,160,80,0.08));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="hard-drive" style="width:20px;height:20px;color:#c9a84c;"></i>
+              </div>
+              <div class="heading-md">Installation</div>
+            </div>
+            <div class="stat-value" style="margin-bottom:0.5rem;">$15K</div>
+            <p class="body-md">Per-building hardware installation including AI-optimized solar panels, sensors, and battery storage system.</p>
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(200,160,80,0.1);">
+              <p class="body-sm">Average installation ROI: 18 months</p>
+            </div>
+          </div>
+          <div class="glass-card">
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,rgba(200,160,80,0.25),rgba(200,160,80,0.08));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i data-lucide="monitor" style="width:20px;height:20px;color:#c9a84c;"></i>
+              </div>
+              <div class="heading-md">Monitoring SaaS</div>
+            </div>
+            <div class="stat-value" style="margin-bottom:0.5rem;">$899<span style="font-size:0.4em; opacity:0.6;">/mo</span></div>
+            <p class="body-md">AI-powered monitoring, predictive maintenance, energy optimization, and real-time analytics dashboard.</p>
+            <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(200,160,80,0.1);">
+              <p class="body-sm">97% annual subscription retention</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card" style="max-width: 400px;">
+          <div style="display:flex; align-items:center; gap:1rem;">
+            <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,rgba(200,160,80,0.2),rgba(200,160,80,0.05));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="pie-chart" style="width:24px;height:24px;color:#c9a84c;"></i>
+            </div>
+            <div>
+              <div class="stat-value" style="font-size:clamp(1.5rem,2.5vw,2.25rem);">72%</div>
+              <div class="stat-label">Gross margins on blended hardware + SaaS revenue</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 7: TEAM ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content scroll-content">
+      <div class="slide-header">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">07 / 09</div>
+      </div>
+
+      <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; gap: clamp(1.25rem, 2.5vw, 2rem);">
+        <div>
+          <div class="label" style="margin-bottom: 0.75rem;">Leadership</div>
+          <div class="accent-line" style="margin-bottom: 1rem;"></div>
+          <h2 class="heading-lg">The <span class="accent">Team</span></h2>
+        </div>
+
+        <div class="grid-3" style="max-width: 1000px;">
+          <div class="glass-card" style="text-align:center;">
+            <div class="avatar-circle" style="margin: 0 auto clamp(0.75rem,1.5vw,1.25rem) auto;">
+              <i data-lucide="user" style="width:clamp(24px,3vw,32px);height:clamp(24px,3vw,32px);color:#c9a84c;"></i>
+            </div>
+            <div class="heading-md" style="margin-bottom:0.15rem;">Elena Rodriguez</div>
+            <div class="label" style="font-size:0.7rem; margin-bottom:0.75rem;">Chief Executive Officer</div>
+            <div style="width:32px;height:1px;background:#c9a84c;margin:0 auto 0.75rem auto;opacity:0.4;"></div>
+            <p class="body-sm">Former VP of Energy Products at Tesla. 12 years in renewable energy technology. Stanford MBA.</p>
+          </div>
+          <div class="glass-card" style="text-align:center;">
+            <div class="avatar-circle" style="margin: 0 auto clamp(0.75rem,1.5vw,1.25rem) auto;">
+              <i data-lucide="user" style="width:clamp(24px,3vw,32px);height:clamp(24px,3vw,32px);color:#c9a84c;"></i>
+            </div>
+            <div class="heading-md" style="margin-bottom:0.15rem;">Marcus Chen</div>
+            <div class="label" style="font-size:0.7rem; margin-bottom:0.75rem;">Chief Technology Officer</div>
+            <div style="width:32px;height:1px;background:#c9a84c;margin:0 auto 0.75rem auto;opacity:0.4;"></div>
+            <p class="body-sm">Led MIT Solar Lab for 6 years. 8 patents in photovoltaic optimization. PhD in Materials Science, MIT.</p>
+          </div>
+          <div class="glass-card" style="text-align:center;">
+            <div class="avatar-circle" style="margin: 0 auto clamp(0.75rem,1.5vw,1.25rem) auto;">
+              <i data-lucide="user" style="width:clamp(24px,3vw,32px);height:clamp(24px,3vw,32px);color:#c9a84c;"></i>
+            </div>
+            <div class="heading-md" style="margin-bottom:0.15rem;">Sarah Kim</div>
+            <div class="label" style="font-size:0.7rem; margin-bottom:0.75rem;">Chief Operating Officer</div>
+            <div style="width:32px;height:1px;background:#c9a84c;margin:0 auto 0.75rem auto;opacity:0.4;"></div>
+            <p class="body-sm">Scaled SunRun from Series B to IPO. 15 years in operations and solar logistics. Wharton MBA.</p>
+          </div>
+        </div>
+
+        <div class="glass-card-sm" style="max-width: 600px;">
+          <p class="body-md"><span class="accent">28 team members</span> across engineering, sales, and operations. Advisory board includes former DOE officials and utility CEOs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 8: ASK ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content scroll-content">
+      <div class="slide-header">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">08 / 09</div>
+      </div>
+
+      <div style="flex: 1; display:flex; flex-direction:column; justify-content:center; gap: clamp(1.25rem, 2.5vw, 2rem);">
+        <div>
+          <div class="label" style="margin-bottom: 0.75rem;">The Ask</div>
+          <div class="accent-line" style="margin-bottom: 1rem;"></div>
+          <h2 class="heading-lg">Seeking <span class="accent">$8M</span> Series A</h2>
+        </div>
+
+        <div class="glass-card" style="max-width: 640px;">
+          <p class="body-lg">We are raising an $8 million Series A to accelerate product development, expand our sales team, and scale operations to meet growing enterprise demand.</p>
+        </div>
+
+        <div style="max-width: 700px; display:flex; flex-direction:column; gap: clamp(0.75rem, 1.5vw, 1.25rem);">
+          <!-- R&D 40% -->
+          <div class="glass-card-sm">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <i data-lucide="flask-conical" style="width:18px;height:18px;color:#c9a84c;"></i>
+                <span class="heading-sm" style="font-size:clamp(0.85rem,1.1vw,1rem);">Research & Development</span>
+              </div>
+              <span class="accent" style="font-weight:600; font-family:'Playfair Display',serif;">40% &middot; $3.2M</span>
+            </div>
+            <div class="alloc-bar"><div class="alloc-fill" style="width:40%;"></div></div>
+            <p class="body-sm" style="margin-top:0.4rem;">Next-gen panel design, AI model expansion, battery orchestration v2</p>
+          </div>
+          <!-- Sales 30% -->
+          <div class="glass-card-sm">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <i data-lucide="megaphone" style="width:18px;height:18px;color:#c9a84c;"></i>
+                <span class="heading-sm" style="font-size:clamp(0.85rem,1.1vw,1rem);">Sales & Marketing</span>
+              </div>
+              <span class="accent" style="font-weight:600; font-family:'Playfair Display',serif;">30% &middot; $2.4M</span>
+            </div>
+            <div class="alloc-bar"><div class="alloc-fill" style="width:30%;"></div></div>
+            <p class="body-sm" style="margin-top:0.4rem;">Enterprise sales team expansion, brand awareness, channel partnerships</p>
+          </div>
+          <!-- Operations 20% -->
+          <div class="glass-card-sm">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <i data-lucide="settings" style="width:18px;height:18px;color:#c9a84c;"></i>
+                <span class="heading-sm" style="font-size:clamp(0.85rem,1.1vw,1rem);">Operations</span>
+              </div>
+              <span class="accent" style="font-weight:600; font-family:'Playfair Display',serif;">20% &middot; $1.6M</span>
+            </div>
+            <div class="alloc-bar"><div class="alloc-fill" style="width:20%;"></div></div>
+            <p class="body-sm" style="margin-top:0.4rem;">Installation infrastructure, supply chain optimization, hiring</p>
+          </div>
+          <!-- Regulatory 10% -->
+          <div class="glass-card-sm">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.75rem;">
+                <i data-lucide="shield" style="width:18px;height:18px;color:#c9a84c;"></i>
+                <span class="heading-sm" style="font-size:clamp(0.85rem,1.1vw,1rem);">Regulatory & Compliance</span>
+              </div>
+              <span class="accent" style="font-weight:600; font-family:'Playfair Display',serif;">10% &middot; $0.8M</span>
+            </div>
+            <div class="alloc-bar"><div class="alloc-fill" style="width:10%;"></div></div>
+            <p class="body-sm" style="margin-top:0.4rem;">Certifications, utility partnerships, grid compliance approvals</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SLIDE 9: VISION ==================== -->
+  <div class="slide" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="slide-video-wrap">
+      <video muted loop playsinline></video>
+      <div class="slide-video-overlay"></div>
+      <div class="slide-gradient-overlay"></div>
+    </div>
+    <div class="slide-content" style="justify-content: center; align-items: center; text-align: center;">
+      <div class="slide-header" style="position: absolute; top: 0; left: 0; right: 0; padding: clamp(1.5rem, 4vw, 3rem);">
+        <div class="logo-mark">
+          <div class="icon-wrap"><i data-lucide="sun" style="width:18px;height:18px;color:#fff;"></i></div>
+          <span style="font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:600; color:#c9a84c;">Solara</span>
+        </div>
+        <div class="page-num">09 / 09</div>
+      </div>
+
+      <div style="max-width: 800px;">
+        <div class="label" style="margin-bottom: 1.5rem; letter-spacing: 0.2em;">Our Vision</div>
+        <div class="accent-line" style="margin: 0 auto 2rem auto;"></div>
+        <h2 class="heading-xl" style="margin-bottom: 1.5rem;">A world where every building <span class="accent">powers itself</span></h2>
+        <p class="cover-subtitle" style="margin-bottom: 2.5rem; max-width:600px; margin-left:auto; margin-right:auto;">We are building the infrastructure layer that makes self-sustaining buildings the default, not the exception.</p>
+
+        <div class="grid-3" style="max-width: 750px; margin: 0 auto 2rem auto;">
+          <div class="glass-card-sm" style="text-align:center;">
+            <div style="margin-bottom:0.5rem;"><i data-lucide="building" style="width:24px;height:24px;color:#c9a84c;"></i></div>
+            <div class="heading-sm" style="color:#c9a84c; margin-bottom:0.15rem;">500+</div>
+            <p class="body-sm">Installations by 2026</p>
+          </div>
+          <div class="glass-card-sm" style="text-align:center;">
+            <div style="margin-bottom:0.5rem;"><i data-lucide="globe" style="width:24px;height:24px;color:#c9a84c;"></i></div>
+            <div class="heading-sm" style="color:#c9a84c; margin-bottom:0.15rem;">Global</div>
+            <p class="body-sm">International expansion</p>
+          </div>
+          <div class="glass-card-sm" style="text-align:center;">
+            <div style="margin-bottom:0.5rem;"><i data-lucide="grid-3x3" style="width:24px;height:24px;color:#c9a84c;"></i></div>
+            <div class="heading-sm" style="color:#c9a84c; margin-bottom:0.15rem;">Grid-Scale</div>
+            <p class="body-sm">Utility-grade solutions</p>
+          </div>
+        </div>
+
+        <div class="glass-card" style="display:inline-block; padding: 1rem 2.5rem;">
+          <p class="body-md" style="color:rgba(255,255,255,0.8);">
+            <span class="accent" style="font-weight:600;">elena@solaraenergy.com</span>
+            <span style="margin: 0 0.75rem; opacity:0.3;">|</span>
+            solaraenergy.com
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ==================== CONTROLS BAR ==================== -->
+<div id="controls">
+  <button class="ctrl-btn" id="btn-prev" aria-label="Previous slide">
+    <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
+  </button>
+  <span class="slide-counter" id="slide-counter">1 / 9</span>
+  <div class="progress-dots" id="progress-dots"></div>
+  <span class="slide-counter" id="slide-counter-right"></span>
+  <button class="ctrl-btn" id="btn-next" aria-label="Next slide">
+    <i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
+  </button>
+  <button class="ctrl-btn" id="btn-fs" aria-label="Toggle fullscreen" style="margin-left:0.5rem;">
+    <i data-lucide="maximize" style="width:16px;height:16px;"></i>
+  </button>
+</div>
+
+<!-- ==================== KEYBOARD HINT ==================== -->
+<div id="kb-hint">&larr; &rarr; Navigate &middot; F Fullscreen</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ---- Initialize Lucide Icons ----
+  lucide.createIcons();
+
+  // ---- Slide Engine ----
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const totalSlides = slides.length;
+  let current = 0;
+
+  const counterEl = document.getElementById('slide-counter');
+  const dotsEl = document.getElementById('progress-dots');
+  const controlsEl = document.getElementById('controls');
+  const hintEl = document.getElementById('kb-hint');
+
+  // Build progress dots
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    dotsEl.appendChild(dot);
+  }
+  const dots = Array.from(dotsEl.children);
+
+  function goTo(index) {
+    if (index < 0 || index >= totalSlides || index === current) return;
+    const prev = current;
+    current = index;
+
+    slides.forEach((s, i) => {
+      s.classList.remove('active', 'past', 'future');
+      if (i === current) s.classList.add('active');
+      else if (i < current) s.classList.add('past');
+      else s.classList.add('future');
+    });
+
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    counterEl.textContent = (current + 1) + ' / ' + totalSlides;
+
+    // Ensure active slide video plays + preload neighbors
+    initVideoForSlide(current);
+    if (current + 1 < totalSlides) initVideoForSlide(current + 1);
+    if (current - 1 >= 0) initVideoForSlide(current - 1);
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  // ---- Fullscreen ----
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  // ---- Button Controls ----
+  document.getElementById('btn-next').addEventListener('click', next);
+  document.getElementById('btn-prev').addEventListener('click', prev);
+  document.getElementById('btn-fs').addEventListener('click', toggleFullscreen);
+
+  // ---- Keyboard Navigation ----
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault(); next();
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault(); prev();
+    } else if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault(); toggleFullscreen();
+    }
+  });
+
+  // ---- Auto-hide Controls ----
+  let hideTimer = null;
+
+  function showControls() {
+    controlsEl.classList.remove('hidden');
+    hintEl.classList.remove('hidden');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      controlsEl.classList.add('hidden');
+      hintEl.classList.add('hidden');
+    }, 3000);
+  }
+
+  document.addEventListener('mousemove', showControls);
+  document.addEventListener('touchstart', showControls, { passive: true });
+  showControls();
+
+  // ---- HLS Video Initialization ----
+  const videoCache = {};
+
+  function initVideoForSlide(index) {
+    if (index < 0 || index >= totalSlides) return;
+    const slide = slides[index];
+    const url = slide.getAttribute('data-video');
+    if (!url) return;
+    const video = slide.querySelector('video');
+    if (!video || video.dataset.initialized) return;
+    video.dataset.initialized = 'true';
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        video.play().catch(() => {});
+      });
+      videoCache[index] = hls;
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari native HLS fallback
+      video.src = url;
+      video.addEventListener('loadedmetadata', function() {
+        video.play().catch(() => {});
+      });
+    }
+  }
+
+  // Pre-initialize first slide and next
+  initVideoForSlide(0);
+  if (totalSlides > 1) initVideoForSlide(1);
+
+  // ---- Touch / Swipe Support ----
+  let touchStartX = 0;
+  document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  document.addEventListener('touchend', function(e) {
+    const diff = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(diff) > 50) {
+      if (diff < 0) next(); else prev();
+    }
+  }, { passive: true });
+
+})();
+</script>
+
+</body>
+</html>

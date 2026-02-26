@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stellaris - Pitch Deck</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- HLS.js -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sora: ['Sora', 'sans-serif'],
+        inter: ['Inter', 'sans-serif'],
+      },
+    },
+  },
+};
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #05001a;
+    font-family: 'Inter', sans-serif;
+    color: #e2e8f0;
+  }
+
+  /* ── Gradient text for headings ── */
+  .gradient-text {
+    background: linear-gradient(135deg, #a855f7, #06b6d4, #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Aurora card ── */
+  .aurora-card {
+    background: linear-gradient(135deg, rgba(120,80,255,0.06) 0%, rgba(0,200,200,0.03) 100%);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
+    border: 1px solid rgba(120,80,255,0.12);
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .aurora-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(circle at top left, rgba(168,85,247,0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* ── Decorative orbs ── */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(80px);
+    opacity: 0.15;
+  }
+  .orb-purple {
+    background: radial-gradient(circle, #a855f7 0%, transparent 70%);
+  }
+  .orb-cyan {
+    background: radial-gradient(circle, #06b6d4 0%, transparent 70%);
+  }
+  .orb-green {
+    background: radial-gradient(circle, #22c55e 0%, transparent 70%);
+  }
+
+  /* ── Slide container ── */
+  .deck-viewport {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 500ms ease-in-out, transform 500ms ease-in-out;
+    will-change: opacity, transform;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .slide.active {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+    pointer-events: auto;
+    z-index: 10;
+  }
+  .slide.past {
+    opacity: 0;
+    transform: scale(0.95);
+    z-index: 5;
+  }
+  .slide.future {
+    opacity: 0;
+    transform: scale(1.05);
+    z-index: 5;
+  }
+
+  /* ── Video background ── */
+  .video-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .video-bg video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.18;
+  }
+  .video-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5,0,26,0.6) 0%, rgba(5,0,26,0.85) 100%);
+  }
+
+  /* ── Controls bar ── */
+  .controls-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: linear-gradient(0deg, rgba(5,0,26,0.9) 0%, transparent 100%);
+    transition: opacity 400ms ease, transform 400ms ease;
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  .controls-bar.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .controls-bar button {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid rgba(120,80,255,0.2);
+    background: rgba(120,80,255,0.08);
+    color: #c4b5fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 200ms, border-color 200ms;
+  }
+  .controls-bar button:hover {
+    background: rgba(120,80,255,0.18);
+    border-color: rgba(120,80,255,0.4);
+  }
+
+  .progress-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(168,85,247,0.25);
+    transition: background 300ms, transform 300ms;
+    cursor: pointer;
+  }
+  .progress-dot.active {
+    background: linear-gradient(135deg, #a855f7, #06b6d4);
+    transform: scale(1.3);
+  }
+
+  .slide-counter {
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: rgba(196,181,253,0.6);
+    min-width: 44px;
+    text-align: center;
+  }
+
+  /* ── Keyboard hint ── */
+  .kb-hint {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 100;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: rgba(196,181,253,0.35);
+    letter-spacing: 0.02em;
+    transition: opacity 400ms ease;
+    opacity: 0;
+  }
+  .kb-hint.visible {
+    opacity: 1;
+  }
+
+  /* ── Responsive clamp sizes ── */
+  .text-hero {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    line-height: 1.08;
+  }
+  .text-section {
+    font-size: clamp(1.75rem, 4vw, 3rem);
+    line-height: 1.15;
+  }
+  .text-subtitle {
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    line-height: 1.5;
+  }
+  .text-body {
+    font-size: clamp(0.875rem, 1.5vw, 1.05rem);
+    line-height: 1.7;
+  }
+  .text-stat-num {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    line-height: 1.1;
+  }
+  .text-stat-label {
+    font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+    line-height: 1.4;
+  }
+  .text-small {
+    font-size: clamp(0.75rem, 1.1vw, 0.9rem);
+    line-height: 1.5;
+  }
+
+  /* ── Stat card ── */
+  .stat-card {
+    background: linear-gradient(135deg, rgba(120,80,255,0.08) 0%, rgba(0,200,200,0.04) 100%);
+    border: 1px solid rgba(120,80,255,0.1);
+    border-radius: 20px;
+    padding: clamp(16px, 2vw, 28px);
+    text-align: center;
+  }
+
+  /* ── Team card ── */
+  .team-card {
+    background: linear-gradient(135deg, rgba(120,80,255,0.06) 0%, rgba(0,200,200,0.03) 100%);
+    border: 1px solid rgba(120,80,255,0.1);
+    border-radius: 20px;
+    padding: clamp(20px, 2.5vw, 32px);
+    text-align: center;
+  }
+  .team-avatar {
+    width: clamp(56px, 7vw, 80px);
+    height: clamp(56px, 7vw, 80px);
+    border-radius: 50%;
+    margin: 0 auto clamp(12px, 1.5vw, 18px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
+    color: #fff;
+  }
+
+  /* ── Bullet item ── */
+  .bullet-item {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(10px, 1.5vw, 16px);
+    padding: clamp(10px, 1.2vw, 14px) 0;
+  }
+  .bullet-icon {
+    flex-shrink: 0;
+    width: clamp(28px, 3.5vw, 40px);
+    height: clamp(28px, 3.5vw, 40px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.15);
+  }
+  .bullet-icon i {
+    width: clamp(14px, 1.8vw, 20px);
+    height: clamp(14px, 1.8vw, 20px);
+    color: #a855f7;
+  }
+
+  /* ── Allocation bar ── */
+  .alloc-bar {
+    height: clamp(8px, 1vw, 12px);
+    border-radius: 999px;
+    overflow: hidden;
+    background: rgba(120,80,255,0.08);
+  }
+  .alloc-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 800ms ease;
+  }
+
+  /* ── Slide inner wrapper ── */
+  .slide-inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(24px, 4vw, 64px);
+  }
+</style>
+</head>
+
+<body>
+<div class="deck-viewport" id="deck">
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 1 : COVER                                              -->
+  <!-- ============================================================ -->
+  <div class="slide active" data-video="https://stream.mux.com/JNJEOYI6B3EffB9f5ZhpGbuxzc6gSyJcXaCBbCgZKRg.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <!-- Orbs -->
+    <div class="orb orb-purple" style="width:480px;height:480px;top:-10%;left:-8%;"></div>
+    <div class="orb orb-cyan" style="width:380px;height:380px;bottom:-5%;right:-5%;"></div>
+
+    <div class="slide-inner flex-col text-center">
+      <div style="margin-bottom:clamp(16px,2vw,28px);">
+        <i data-lucide="rocket" style="width:clamp(36px,5vw,56px);height:clamp(36px,5vw,56px);color:#a855f7;"></i>
+      </div>
+      <h1 class="font-sora font-800 text-hero gradient-text" style="margin-bottom:clamp(12px,2vw,24px);">
+        Stellaris
+      </h1>
+      <p class="text-subtitle" style="max-width:640px;color:rgba(226,232,240,0.7);margin-bottom:clamp(24px,3vw,48px);">
+        Real-time Earth intelligence from the final frontier
+      </p>
+      <p class="text-small" style="color:rgba(196,181,253,0.45);">
+        By Commander James Okafor
+      </p>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 2 : PROBLEM                                            -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-purple" style="width:400px;height:400px;top:5%;right:-6%;"></div>
+
+    <div class="slide-inner flex-col" style="max-width:960px;">
+      <p class="text-small font-sora font-600" style="color:#a855f7;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:clamp(8px,1vw,14px);">The Problem</p>
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(20px,3vw,40px);">
+        Earth Data Has a Latency Problem
+      </h2>
+
+      <div class="aurora-card" style="padding:clamp(24px,3vw,40px);width:100%;">
+        <div class="bullet-item">
+          <div class="bullet-icon"><i data-lucide="clock"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">72-hour delay for satellite imagery</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Critical decisions are made on data that is already days old</p>
+          </div>
+        </div>
+        <div class="bullet-item">
+          <div class="bullet-icon"><i data-lucide="dollar-sign"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">$50B in decisions made on stale data</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Agriculture, insurance, logistics rely on outdated snapshots</p>
+          </div>
+        </div>
+        <div class="bullet-item">
+          <div class="bullet-icon"><i data-lucide="flame"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">Climate disasters outpacing monitoring</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Wildfires, floods, and storms move faster than current observation</p>
+          </div>
+        </div>
+        <div class="bullet-item">
+          <div class="bullet-icon"><i data-lucide="puzzle"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">Fragmented data providers</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">No single source of truth across satellite constellations</p>
+          </div>
+        </div>
+        <div class="bullet-item" style="border:none;">
+          <div class="bullet-icon"><i data-lucide="code"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">No real-time API access</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Developers lack programmatic access to live Earth data</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 3 : SOLUTION                                           -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-cyan" style="width:420px;height:420px;bottom:0;left:-8%;"></div>
+    <div class="orb orb-green" style="width:300px;height:300px;top:8%;right:5%;opacity:0.1;"></div>
+
+    <div class="slide-inner flex-col" style="max-width:960px;">
+      <p class="text-small font-sora font-600" style="color:#06b6d4;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:clamp(8px,1vw,14px);">The Solution</p>
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(20px,3vw,40px);">
+        Live Earth API
+      </h2>
+
+      <div class="aurora-card" style="padding:clamp(24px,3vw,40px);width:100%;">
+        <div class="bullet-item">
+          <div class="bullet-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.15);"><i data-lucide="satellite" style="color:#06b6d4;"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">Constellation of 48 nanosatellites</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Purpose-built for continuous Earth monitoring coverage</p>
+          </div>
+        </div>
+        <div class="bullet-item">
+          <div class="bullet-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.15);"><i data-lucide="timer" style="color:#06b6d4;"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">Sub-15 minute revisit time</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Any point on Earth imaged every 15 minutes or less</p>
+          </div>
+        </div>
+        <div class="bullet-item">
+          <div class="bullet-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.15);"><i data-lucide="brain" style="color:#06b6d4;"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">ML-powered change detection</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Instant anomaly recognition and environmental shift alerts</p>
+          </div>
+        </div>
+        <div class="bullet-item">
+          <div class="bullet-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.15);"><i data-lucide="terminal" style="color:#06b6d4;"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">Developer-first API</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">RESTful & streaming endpoints with SDKs for Python, JS, Go</p>
+          </div>
+        </div>
+        <div class="bullet-item">
+          <div class="bullet-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.15);"><i data-lucide="bell" style="color:#06b6d4;"></i></div>
+          <div>
+            <p class="text-body" style="color:#e2e8f0;font-weight:500;">Automated alert pipelines</p>
+            <p class="text-small" style="color:rgba(226,232,240,0.5);">Webhook-based notifications for real-time change events</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 4 : MARKET                                             -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-green" style="width:360px;height:360px;top:-5%;left:10%;"></div>
+
+    <div class="slide-inner flex-col" style="max-width:960px;">
+      <p class="text-small font-sora font-600" style="color:#22c55e;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:clamp(8px,1vw,14px);">Market Opportunity</p>
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(24px,3vw,44px);">
+        A Massive &amp; Growing Market
+      </h2>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:clamp(12px,2vw,24px);width:100%;margin-bottom:clamp(20px,2.5vw,36px);">
+        <div class="stat-card">
+          <p class="font-sora font-700 text-stat-num gradient-text">$80B</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">TAM<br/>Earth Observation</p>
+        </div>
+        <div class="stat-card">
+          <p class="font-sora font-700 text-stat-num gradient-text">$12B</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">SAM<br/>Real-time Analytics</p>
+        </div>
+        <div class="stat-card">
+          <p class="font-sora font-700 text-stat-num gradient-text">$600M</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">SOM<br/>Developer API Market</p>
+        </div>
+        <div class="stat-card">
+          <p class="font-sora font-700 text-stat-num gradient-text">30%</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">CAGR<br/>Market Growth Rate</p>
+        </div>
+      </div>
+
+      <div class="aurora-card" style="padding:clamp(16px,2vw,28px);width:100%;">
+        <p class="text-body" style="color:rgba(226,232,240,0.65);text-align:center;">
+          The Earth observation market is accelerating as governments, enterprises, and developers demand real-time access to planetary data. Legacy providers cannot keep pace with the shift to API-first, streaming intelligence.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 5 : TRACTION                                           -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/4IMYGcL01xjs7ek5ANO17JC4VQVUTsojZlnw4fXzwSxc.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-purple" style="width:350px;height:350px;bottom:5%;right:-4%;"></div>
+    <div class="orb orb-cyan" style="width:280px;height:280px;top:10%;left:-3%;opacity:0.1;"></div>
+
+    <div class="slide-inner flex-col" style="max-width:960px;">
+      <p class="text-small font-sora font-600" style="color:#a855f7;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:clamp(8px,1vw,14px);">Traction</p>
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(24px,3vw,44px);">
+        Proven Momentum
+      </h2>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:clamp(12px,2vw,24px);width:100%;margin-bottom:clamp(20px,2.5vw,36px);">
+        <div class="stat-card">
+          <div style="margin-bottom:8px;"><i data-lucide="satellite" style="width:24px;height:24px;color:#a855f7;"></i></div>
+          <p class="font-sora font-700 text-stat-num gradient-text">8</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">Satellites<br/>Launched</p>
+        </div>
+        <div class="stat-card">
+          <div style="margin-bottom:8px;"><i data-lucide="users" style="width:24px;height:24px;color:#06b6d4;"></i></div>
+          <p class="font-sora font-700 text-stat-num gradient-text">2,400</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">API<br/>Customers</p>
+        </div>
+        <div class="stat-card">
+          <div style="margin-bottom:8px;"><i data-lucide="trending-up" style="width:24px;height:24px;color:#22c55e;"></i></div>
+          <p class="font-sora font-700 text-stat-num gradient-text">$3.2M</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">Annual<br/>Recurring Revenue</p>
+        </div>
+        <div class="stat-card">
+          <div style="margin-bottom:8px;"><i data-lucide="timer" style="width:24px;height:24px;color:#a855f7;"></i></div>
+          <p class="font-sora font-700 text-stat-num gradient-text">14min</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">Avg Revisit<br/>Time</p>
+        </div>
+      </div>
+
+      <div class="aurora-card" style="padding:clamp(16px,2vw,28px);width:100%;">
+        <p class="text-body" style="color:rgba(226,232,240,0.65);text-align:center;">
+          <i data-lucide="landmark" style="width:16px;height:16px;display:inline;vertical-align:-2px;color:#a855f7;margin-right:6px;"></i>
+          Partnerships with <strong style="color:#e2e8f0;">3 government agencies</strong> for environmental monitoring &amp; disaster response
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 6 : BUSINESS MODEL                                     -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-green" style="width:340px;height:340px;bottom:-8%;left:5%;"></div>
+
+    <div class="slide-inner flex-col" style="max-width:960px;">
+      <p class="text-small font-sora font-600" style="color:#22c55e;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:clamp(8px,1vw,14px);">Business Model</p>
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(24px,3vw,44px);">
+        Usage-Based Revenue Engine
+      </h2>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:clamp(12px,2vw,24px);width:100%;">
+        <div class="aurora-card" style="padding:clamp(20px,2.5vw,32px);">
+          <div style="margin-bottom:12px;"><i data-lucide="cloud" style="width:28px;height:28px;color:#06b6d4;"></i></div>
+          <p class="font-sora font-600 text-body" style="color:#e2e8f0;margin-bottom:8px;">API Pay-per-Use</p>
+          <p class="font-sora font-700" style="font-size:clamp(1.25rem,2.5vw,1.75rem);margin-bottom:4px;">
+            <span class="gradient-text">$0.02</span><span style="color:rgba(226,232,240,0.45);font-size:0.6em;font-weight:400;">/km&sup2;</span>
+          </p>
+          <p class="text-small" style="color:rgba(226,232,240,0.5);">Per imagery request. Volume discounts at scale.</p>
+        </div>
+
+        <div class="aurora-card" style="padding:clamp(20px,2.5vw,32px);">
+          <div style="margin-bottom:12px;"><i data-lucide="building" style="width:28px;height:28px;color:#a855f7;"></i></div>
+          <p class="font-sora font-600 text-body" style="color:#e2e8f0;margin-bottom:8px;">Enterprise Tiers</p>
+          <p class="font-sora font-700" style="font-size:clamp(1.25rem,2.5vw,1.75rem);margin-bottom:4px;">
+            <span class="gradient-text">$50K - $500K</span><span style="color:rgba(226,232,240,0.45);font-size:0.6em;font-weight:400;">/yr</span>
+          </p>
+          <p class="text-small" style="color:rgba(226,232,240,0.5);">Dedicated capacity, SLAs, custom analytics, priority tasking.</p>
+        </div>
+
+        <div class="aurora-card" style="padding:clamp(20px,2.5vw,32px);">
+          <div style="margin-bottom:12px;"><i data-lucide="bar-chart-3" style="width:28px;height:28px;color:#22c55e;"></i></div>
+          <p class="font-sora font-600 text-body" style="color:#e2e8f0;margin-bottom:8px;">Gross Margins</p>
+          <p class="font-sora font-700" style="font-size:clamp(1.25rem,2.5vw,1.75rem);margin-bottom:4px;">
+            <span class="gradient-text">65%</span>
+          </p>
+          <p class="text-small" style="color:rgba(226,232,240,0.5);">Software-like margins after constellation deployment costs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 7 : TEAM                                               -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-purple" style="width:380px;height:380px;top:-5%;left:-5%;"></div>
+    <div class="orb orb-cyan" style="width:280px;height:280px;bottom:5%;right:2%;opacity:0.12;"></div>
+
+    <div class="slide-inner flex-col" style="max-width:960px;">
+      <p class="text-small font-sora font-600" style="color:#a855f7;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:clamp(8px,1vw,14px);">The Team</p>
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(24px,3vw,44px);">
+        Built by Space Veterans
+      </h2>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:clamp(16px,2vw,28px);width:100%;">
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg,#a855f7,#7c3aed);">JO</div>
+          <p class="font-sora font-600 text-body" style="color:#e2e8f0;">James Okafor</p>
+          <p class="text-small" style="color:#a855f7;margin:4px 0 8px;">CEO</p>
+          <p class="text-small" style="color:rgba(226,232,240,0.5);">Ex-SpaceX, led Starlink satellite deployment operations</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg,#06b6d4,#0891b2);">ML</div>
+          <p class="font-sora font-600 text-body" style="color:#e2e8f0;">Dr. Mei Lin</p>
+          <p class="text-small" style="color:#06b6d4;margin:4px 0 8px;">CTO</p>
+          <p class="text-small" style="color:rgba(226,232,240,0.5);">Ex-NASA JPL, ML systems architect for Mars rover imaging</p>
+        </div>
+        <div class="team-card">
+          <div class="team-avatar" style="background:linear-gradient(135deg,#22c55e,#16a34a);">PS</div>
+          <p class="font-sora font-600 text-body" style="color:#e2e8f0;">Priya Sharma</p>
+          <p class="text-small" style="color:#22c55e;margin:4px 0 8px;">COO</p>
+          <p class="text-small" style="color:rgba(226,232,240,0.5);">Ex-Planet Labs, scaled operations from 50 to 200+ satellites</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 8 : ASK                                                -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-green" style="width:440px;height:440px;top:-8%;right:-6%;"></div>
+
+    <div class="slide-inner flex-col" style="max-width:860px;">
+      <p class="text-small font-sora font-600" style="color:#06b6d4;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:clamp(8px,1vw,14px);">The Ask</p>
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(6px,1vw,12px);">
+        Seeking $25M Series B
+      </h2>
+      <p class="text-subtitle" style="color:rgba(226,232,240,0.55);margin-bottom:clamp(24px,3vw,44px);">Fuel the next phase of orbital expansion</p>
+
+      <div class="aurora-card" style="padding:clamp(24px,3vw,40px);width:100%;">
+        <!-- 50% Satellite Deployment -->
+        <div style="margin-bottom:clamp(16px,2vw,24px);">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span class="text-body" style="color:#e2e8f0;font-weight:500;">Satellite Deployment</span>
+            <span class="font-sora font-600 text-body gradient-text">50%</span>
+          </div>
+          <div class="alloc-bar">
+            <div class="alloc-fill" style="width:50%;background:linear-gradient(90deg,#a855f7,#06b6d4);"></div>
+          </div>
+        </div>
+        <!-- 25% Platform Engineering -->
+        <div style="margin-bottom:clamp(16px,2vw,24px);">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span class="text-body" style="color:#e2e8f0;font-weight:500;">Platform Engineering</span>
+            <span class="font-sora font-600 text-body gradient-text">25%</span>
+          </div>
+          <div class="alloc-bar">
+            <div class="alloc-fill" style="width:25%;background:linear-gradient(90deg,#06b6d4,#22c55e);"></div>
+          </div>
+        </div>
+        <!-- 15% Sales -->
+        <div style="margin-bottom:clamp(16px,2vw,24px);">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span class="text-body" style="color:#e2e8f0;font-weight:500;">Sales &amp; Marketing</span>
+            <span class="font-sora font-600 text-body gradient-text">15%</span>
+          </div>
+          <div class="alloc-bar">
+            <div class="alloc-fill" style="width:15%;background:linear-gradient(90deg,#22c55e,#a855f7);"></div>
+          </div>
+        </div>
+        <!-- 10% Operations -->
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span class="text-body" style="color:#e2e8f0;font-weight:500;">Operations</span>
+            <span class="font-sora font-600 text-body gradient-text">10%</span>
+          </div>
+          <div class="alloc-bar">
+            <div class="alloc-fill" style="width:10%;background:linear-gradient(90deg,#a855f7,#06b6d4);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SLIDE 9 : VISION                                             -->
+  <!-- ============================================================ -->
+  <div class="slide future" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="video-bg"><video muted playsinline></video></div>
+
+    <div class="orb orb-purple" style="width:500px;height:500px;top:-12%;left:-10%;"></div>
+    <div class="orb orb-cyan" style="width:400px;height:400px;bottom:-10%;right:-8%;"></div>
+    <div class="orb orb-green" style="width:250px;height:250px;top:40%;left:50%;opacity:0.08;"></div>
+
+    <div class="slide-inner flex-col text-center" style="max-width:800px;">
+      <div style="margin-bottom:clamp(12px,2vw,24px);">
+        <i data-lucide="globe" style="width:clamp(36px,5vw,56px);height:clamp(36px,5vw,56px);color:#06b6d4;"></i>
+      </div>
+
+      <h2 class="font-sora font-700 text-section gradient-text" style="margin-bottom:clamp(16px,2vw,28px);">
+        A Living Digital Twin of Earth
+      </h2>
+
+      <p class="text-subtitle" style="color:rgba(226,232,240,0.65);margin-bottom:clamp(28px,4vw,52px);max-width:640px;margin-left:auto;margin-right:auto;">
+        Our moonshot: a continuously updated, queryable model of the entire planet -- accessible to every developer on Earth.
+      </p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:clamp(12px,2vw,24px);width:100%;margin-bottom:clamp(24px,3vw,40px);">
+        <div class="stat-card">
+          <p class="font-sora font-700 text-stat-num gradient-text">200</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">Satellite Constellation<br/>by 2027</p>
+        </div>
+        <div class="stat-card">
+          <p class="font-sora font-700 text-stat-num gradient-text">5min</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">Global Revisit<br/>Target</p>
+        </div>
+        <div class="stat-card">
+          <p class="font-sora font-700 text-stat-num gradient-text">&infin;</p>
+          <p class="text-stat-label" style="color:rgba(226,232,240,0.55);margin-top:6px;">Climate Intelligence<br/>Platform</p>
+        </div>
+      </div>
+
+      <p class="font-sora font-600 text-subtitle gradient-text">
+        The future is observable.
+      </p>
+    </div>
+  </div>
+
+</div><!-- /deck-viewport -->
+
+<!-- ── Keyboard Hint ── -->
+<div class="kb-hint" id="kbHint">
+  &larr; &rarr; Navigate &middot; F Fullscreen
+</div>
+
+<!-- ── Controls Bar ── -->
+<div class="controls-bar" id="controlsBar">
+  <span class="slide-counter" id="slideCounter">1 / 9</span>
+  <div class="progress-dots" id="progressDots"></div>
+  <button id="btnPrev" aria-label="Previous slide"><i data-lucide="chevron-left" style="width:18px;height:18px;"></i></button>
+  <button id="btnNext" aria-label="Next slide"><i data-lucide="chevron-right" style="width:18px;height:18px;"></i></button>
+  <button id="btnFs" aria-label="Toggle fullscreen"><i data-lucide="maximize" style="width:18px;height:18px;"></i></button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Elements ── */
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const total  = slides.length;
+  let current  = 0;
+
+  const controlsBar  = document.getElementById('controlsBar');
+  const kbHint       = document.getElementById('kbHint');
+  const slideCounter = document.getElementById('slideCounter');
+  const progressDots = document.getElementById('progressDots');
+  const btnPrev      = document.getElementById('btnPrev');
+  const btnNext      = document.getElementById('btnNext');
+  const btnFs        = document.getElementById('btnFs');
+
+  /* ── Progress dots ── */
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goTo(i));
+    progressDots.appendChild(dot);
+  }
+  const dots = Array.from(progressDots.children);
+
+  /* ── Slide navigation ── */
+  function goTo(index) {
+    if (index < 0 || index >= total || index === current) return;
+    slides[current].classList.remove('active');
+    slides[current].classList.add(index > current ? 'past' : 'future');
+
+    current = index;
+    slides.forEach((s, i) => {
+      s.classList.remove('active', 'past', 'future');
+      if (i < current) s.classList.add('past');
+      else if (i > current) s.classList.add('future');
+      else s.classList.add('active');
+    });
+
+    slideCounter.textContent = (current + 1) + ' / ' + total;
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    initVideoForSlide(current);
+  }
+
+  function next() { goTo(current + 1); }
+  function prev() { goTo(current - 1); }
+
+  btnNext.addEventListener('click', next);
+  btnPrev.addEventListener('click', prev);
+
+  /* ── Keyboard ── */
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFullscreen(); }
+  });
+
+  /* ── Fullscreen ── */
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+  btnFs.addEventListener('click', toggleFullscreen);
+
+  /* ── Auto-hide controls ── */
+  let hideTimer = null;
+  function showControls() {
+    controlsBar.classList.add('visible');
+    kbHint.classList.add('visible');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      controlsBar.classList.remove('visible');
+      kbHint.classList.remove('visible');
+    }, 3000);
+  }
+  document.addEventListener('mousemove', showControls);
+  document.addEventListener('touchstart', showControls);
+  showControls();
+
+  /* ── HLS Video init ── */
+  const hlsInstances = new Map();
+
+  function initVideoForSlide(index) {
+    const slide = slides[index];
+    const url   = slide.dataset.video;
+    if (!url) return;
+    const video = slide.querySelector('video');
+    if (!video || video.dataset.hlsReady) return;
+    video.dataset.hlsReady = '1';
+
+    if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true });
+      hls.loadSource(url);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+      hlsInstances.set(index, hls);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      /* Safari native HLS */
+      video.src = url;
+      video.addEventListener('loadedmetadata', () => {
+        video.play().catch(() => {});
+      }, { once: true });
+    }
+  }
+
+  /* Pre-init first slide video */
+  initVideoForSlide(0);
+
+  /* ── Lucide icons ── */
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+})();
+</script>
+</body>
+</html>

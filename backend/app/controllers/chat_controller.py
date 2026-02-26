@@ -257,8 +257,9 @@ async def _handle_design_mode(
     1. Save the user message.
     2. Compute a hash of the current extraction fields and compare with
        ``project.last_generation_fields_hash``.
-    3. If different -> regenerate full_html, document contents, llms_txt,
-       ai_json and update the project.
+    3. If different -> regenerate full_html, llms_txt, ai_json.
+       Document content is only generated once (first design-mode entry);
+       subsequent chats leave existing document content untouched.
     4. If same -> skip regeneration and return a "no changes" message.
     """
     # --- save user message ---
@@ -308,7 +309,14 @@ async def _handle_design_mode(
         # Build all_fields dict from documents
         all_fields = {doc.type: doc.fields or {} for doc in documents}
 
-        # --- Run ALL LLM calls concurrently to stay under Cloudflare's 100s timeout ---
+        # --- Run LLM calls concurrently ---
+        # Only generate document content for docs that don't have it yet
+        # (first design-mode entry). Subsequent chats only regenerate the deck.
+        docs_needing_content = [
+            doc for doc in documents
+            if not doc.content or doc.content.strip() == ""
+        ]
+
         async def _gen_doc(doc):
             try:
                 content = await generate_document_content(
@@ -325,10 +333,10 @@ async def _handle_design_mode(
                 logger.warning("Failed to generate llms.txt for project %s", project.id, exc_info=True)
                 return None
 
-        # Fire all LLM calls at once: HTML deck + 9 doc contents + llms.txt
+        # Fire LLM calls: HTML deck + any docs needing content + llms.txt
         results = await asyncio.gather(
             generate_full_html(project.name, all_fields),
-            *[_gen_doc(doc) for doc in documents],
+            *[_gen_doc(doc) for doc in docs_needing_content],
             _gen_llms(),
         )
 
@@ -341,7 +349,7 @@ async def _handle_design_mode(
         project.full_html = full_html
         logger.info("HTML deck generated for project %s", project.id)
 
-        # Apply document contents
+        # Apply document contents (only for docs that were missing content)
         for doc, content, err in doc_results:
             if err:
                 logger.warning("Failed to generate content for doc %s (project %s): %s", doc.type, project.id, err)
@@ -378,7 +386,7 @@ async def _handle_design_mode(
     assistant_message = ChatMessage(
         project_id=project.id,
         role="assistant",
-        content="Design generation complete! Your pitch deck, documents, and AI outputs have been updated.",
+        content="Design generation complete! Your pitch deck has been updated.",
     )
     db.add(assistant_message)
     await db.flush()

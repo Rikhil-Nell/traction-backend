@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MediFlow - Pitch Deck</title>
+
+<!-- Google Fonts: Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- HLS.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<!-- Lucide Icons CDN -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        inter: ['Inter', 'sans-serif'],
+      },
+      colors: {
+        frost: {
+          bg: '#f4f5f7',
+          heading: '#1a1a2e',
+          body: '#4a4a6a',
+          card: '#ffffff',
+          border: '#e2e4e9',
+          accent: '#2563eb',
+          muted: '#8890a4',
+        },
+      },
+    },
+  },
+};
+</script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+  background: #f4f5f7;
+}
+
+/* Slide container */
+.deck-container {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: #f4f5f7;
+}
+
+/* Individual slide */
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 500ms ease-in-out, transform 500ms ease-in-out;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.slide.past {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.slide.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+  z-index: 1;
+}
+
+.slide.future {
+  opacity: 0;
+  transform: scale(1.05);
+}
+
+/* Video background */
+.video-bg-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.video-bg-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(244, 245, 247, 0.85);
+  z-index: 1;
+}
+
+.slide-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 80px;
+}
+
+/* Cards */
+.frost-card {
+  background: #ffffff;
+  border: 1px solid #e2e4e9;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* Controls bar */
+.controls-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 14px 28px;
+  background: #ffffff;
+  border-top: 1px solid #e2e4e9;
+  transition: opacity 400ms ease, transform 400ms ease;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.controls-bar.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.controls-bar button {
+  background: none;
+  border: 1px solid #e2e4e9;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #4a4a6a;
+  transition: background 200ms, color 200ms;
+}
+
+.controls-bar button:hover {
+  background: #f4f5f7;
+  color: #1a1a2e;
+}
+
+/* Progress dots */
+.progress-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+  transition: background 300ms, transform 300ms;
+  cursor: pointer;
+}
+
+.progress-dot.active {
+  background: #2563eb;
+  transform: scale(1.25);
+}
+
+/* Slide counter */
+.slide-counter {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a4a6a;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Keyboard hint */
+.keyboard-hint {
+  position: fixed;
+  top: 20px;
+  right: 28px;
+  z-index: 100;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8890a4;
+  letter-spacing: 0.02em;
+  transition: opacity 400ms ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.keyboard-hint.visible {
+  opacity: 1;
+}
+
+/* Metric item */
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2563eb;
+  line-height: 1;
+}
+
+.metric-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4a4a6a;
+  margin-top: 6px;
+}
+
+/* Team avatar placeholder */
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #e8ecf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Allocation bar */
+.alloc-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: #e8ecf4;
+  overflow: hidden;
+}
+
+.alloc-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: #2563eb;
+  transition: width 600ms ease;
+}
+
+/* Tag / badge */
+.frost-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .slide-content {
+    padding: 40px 36px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="deck-container" id="deck">
+
+  <!-- ===== SLIDE 1: COVER ===== -->
+  <div class="slide active" data-video="https://stream.mux.com/JNJEOYI6B3EffB9f5ZhpGbuxzc6gSyJcXaCBbCgZKRg.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="text-center max-w-3xl mx-auto">
+        <div class="frost-tag mb-6 mx-auto w-fit">HEALTHCARE AI</div>
+        <h1 class="text-6xl font-bold tracking-tight mb-6" style="color:#1a1a2e; line-height:1.1;">
+          Medi<span style="color:#2563eb;">Flow</span>
+        </h1>
+        <p class="text-xl font-normal leading-relaxed mb-10" style="color:#4a4a6a; max-width:560px; margin-left:auto; margin-right:auto;">
+          Streamlining clinical workflows with intelligent automation
+        </p>
+        <div class="flex items-center justify-center gap-3">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold" style="background:#e8ecf4; color:#2563eb;">SC</div>
+          <div>
+            <p class="text-sm font-semibold" style="color:#1a1a2e;">Dr. Sarah Chen</p>
+            <p class="text-xs" style="color:#8890a4;">Founder &amp; CEO</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 2: PROBLEM ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="frost-tag mb-4">THE PROBLEM</p>
+        <h2 class="text-4xl font-bold mb-3" style="color:#1a1a2e;">Healthcare is Drowning in Paperwork</h2>
+        <p class="text-base mb-10" style="color:#4a4a6a; max-width:600px;">
+          Clinicians spend more time on documentation than with patients. The system is breaking.
+        </p>
+
+        <div class="grid grid-cols-3 gap-5 mb-8">
+          <div class="frost-card p-6">
+            <div class="metric-value">2 hrs</div>
+            <div class="metric-label">per day on documentation</div>
+          </div>
+          <div class="frost-card p-6">
+            <div class="metric-value">250K</div>
+            <div class="metric-label">deaths from medical errors annually</div>
+          </div>
+          <div class="frost-card p-6">
+            <div class="metric-value">$1T</div>
+            <div class="metric-label">administrative waste per year</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-5">
+          <div class="frost-card p-5 flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="heart-crack" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Clinician Burnout Crisis</p>
+              <p class="text-sm" style="color:#4a4a6a;">Over 50% of physicians report burnout, driven largely by administrative burden.</p>
+            </div>
+          </div>
+          <div class="frost-card p-5 flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="unplug" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Fragmented EHR Systems</p>
+              <p class="text-sm" style="color:#4a4a6a;">Critical patient data trapped in siloed systems that don't communicate.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 3: SOLUTION ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="frost-tag mb-4">OUR SOLUTION</p>
+        <h2 class="text-4xl font-bold mb-3" style="color:#1a1a2e;">Clinical AI That Works With You</h2>
+        <p class="text-base mb-10" style="color:#4a4a6a; max-width:580px;">
+          An AI-native platform that integrates seamlessly into existing clinical workflows.
+        </p>
+
+        <div class="grid grid-cols-3 gap-5 mb-5">
+          <div class="frost-card p-6">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="mic" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Ambient Documentation</p>
+            <p class="text-sm" style="color:#4a4a6a;">Automatically captures and structures clinical notes from natural conversation.</p>
+          </div>
+          <div class="frost-card p-6">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="brain" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Intelligent Order Sets</p>
+            <p class="text-sm" style="color:#4a4a6a;">Context-aware suggestions based on patient history, diagnosis, and best practices.</p>
+          </div>
+          <div class="frost-card p-6">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="calendar-clock" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Predictive Scheduling</p>
+            <p class="text-sm" style="color:#4a4a6a;">Optimize patient flow and reduce wait times with ML-powered scheduling.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-5">
+          <div class="frost-card p-5 flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="repeat" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Cross-System Interoperability</p>
+              <p class="text-sm" style="color:#4a4a6a;">HL7 FHIR-native connectors unify data across all major EHR platforms.</p>
+            </div>
+          </div>
+          <div class="frost-card p-5 flex items-start gap-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="audio-lines" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <div>
+              <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Voice-First Interface</p>
+              <p class="text-sm" style="color:#4a4a6a;">Designed for hands-free clinical environments. No typing required.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 4: MARKET ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="frost-tag mb-4">MARKET OPPORTUNITY</p>
+        <h2 class="text-4xl font-bold mb-3" style="color:#1a1a2e;">Massive, Growing Market</h2>
+        <p class="text-base mb-10" style="color:#4a4a6a; max-width:560px;">
+          Healthcare IT is undergoing a generational shift toward AI-driven clinical tools.
+        </p>
+
+        <div class="grid grid-cols-3 gap-5 mb-8">
+          <!-- TAM -->
+          <div class="frost-card p-6 text-center">
+            <p class="text-xs font-semibold mb-2 tracking-wider" style="color:#8890a4;">TAM</p>
+            <div class="metric-value text-center">$120B</div>
+            <div class="metric-label text-center">Healthcare IT</div>
+          </div>
+          <!-- SAM -->
+          <div class="frost-card p-6 text-center">
+            <p class="text-xs font-semibold mb-2 tracking-wider" style="color:#8890a4;">SAM</p>
+            <div class="metric-value text-center">$18B</div>
+            <div class="metric-label text-center">Clinical Workflow</div>
+          </div>
+          <!-- SOM -->
+          <div class="frost-card p-6 text-center">
+            <p class="text-xs font-semibold mb-2 tracking-wider" style="color:#8890a4;">SOM</p>
+            <div class="metric-value text-center">$900M</div>
+            <div class="metric-label text-center">AI Documentation</div>
+          </div>
+        </div>
+
+        <div class="frost-card p-6 flex items-center gap-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="trending-up" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold" style="color:#2563eb;">22%</p>
+              <p class="text-xs font-medium" style="color:#4a4a6a;">CAGR</p>
+            </div>
+          </div>
+          <div style="width:1px; height:40px; background:#e2e4e9;"></div>
+          <p class="text-sm" style="color:#4a4a6a;">
+            Regulatory tailwinds from CMS interoperability mandates and accelerating AI adoption in health systems are driving explosive growth in clinical workflow automation.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 5: TRACTION ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/4IMYGcL01xjs7ek5ANO17JC4VQVUTsojZlnw4fXzwSxc.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="frost-tag mb-4">TRACTION</p>
+        <h2 class="text-4xl font-bold mb-3" style="color:#1a1a2e;">Strong Early Momentum</h2>
+        <p class="text-base mb-10" style="color:#4a4a6a; max-width:560px;">
+          Rapid adoption and measurable clinical impact across our partner hospitals.
+        </p>
+
+        <div class="grid grid-cols-4 gap-5 mb-8">
+          <div class="frost-card p-6 text-center">
+            <div class="metric-value">34</div>
+            <div class="metric-label">Hospitals</div>
+          </div>
+          <div class="frost-card p-6 text-center">
+            <div class="metric-value">$1.8M</div>
+            <div class="metric-label">ARR</div>
+          </div>
+          <div class="frost-card p-6 text-center">
+            <div class="metric-value">47 min</div>
+            <div class="metric-label">saved / clinician / day</div>
+          </div>
+          <div class="frost-card p-6 text-center">
+            <div class="metric-value">94%</div>
+            <div class="metric-label">Adoption Rate</div>
+          </div>
+        </div>
+
+        <div class="frost-card p-6">
+          <p class="text-sm font-semibold mb-4" style="color:#1a1a2e;">Key Partnerships</p>
+          <div class="grid grid-cols-3 gap-4">
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#f8f9fb;">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="building-2" style="width:18px;height:18px;color:#2563eb;"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium" style="color:#1a1a2e;">Mount Sinai Health</p>
+                <p class="text-xs" style="color:#8890a4;">12 facilities</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#f8f9fb;">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="building-2" style="width:18px;height:18px;color:#2563eb;"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium" style="color:#1a1a2e;">Cedars-Sinai</p>
+                <p class="text-xs" style="color:#8890a4;">8 facilities</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg" style="background:#f8f9fb;">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="building-2" style="width:18px;height:18px;color:#2563eb;"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium" style="color:#1a1a2e;">Mayo Clinic Network</p>
+                <p class="text-xs" style="color:#8890a4;">14 facilities</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 6: BUSINESS MODEL ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/fHfa8VIbBdqZelLGg5thjsypZ101M01dbyIMLNDWQwlLA.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="frost-tag mb-4">BUSINESS MODEL</p>
+        <h2 class="text-4xl font-bold mb-3" style="color:#1a1a2e;">Per-Provider SaaS</h2>
+        <p class="text-base mb-10" style="color:#4a4a6a; max-width:560px;">
+          Simple, predictable pricing that scales with hospital adoption.
+        </p>
+
+        <div class="grid grid-cols-3 gap-5 mb-8">
+          <div class="frost-card p-6 text-center">
+            <div class="metric-value">$299</div>
+            <div class="metric-label">per provider / month</div>
+          </div>
+          <div class="frost-card p-6 text-center">
+            <div class="metric-value">68%</div>
+            <div class="metric-label">Gross Margins</div>
+          </div>
+          <div class="frost-card p-6 text-center">
+            <div class="metric-value">$180K</div>
+            <div class="metric-label">avg hospital contract / yr</div>
+          </div>
+        </div>
+
+        <div class="frost-card p-6">
+          <p class="text-sm font-semibold mb-5" style="color:#1a1a2e;">Revenue Drivers</p>
+          <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="user-check" style="width:16px;height:16px;color:#2563eb;"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium" style="color:#1a1a2e;">Seat-based licensing</p>
+                <p class="text-xs" style="color:#8890a4;">Predictable per-provider recurring revenue</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="puzzle" style="width:16px;height:16px;color:#2563eb;"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium" style="color:#1a1a2e;">Premium integrations</p>
+                <p class="text-xs" style="color:#8890a4;">Custom EHR connectors and data pipelines</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="bar-chart-3" style="width:16px;height:16px;color:#2563eb;"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium" style="color:#1a1a2e;">Analytics tier</p>
+                <p class="text-xs" style="color:#8890a4;">Advanced reporting and insights dashboard</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(37,99,235,0.08);">
+                <i data-lucide="shield-check" style="width:16px;height:16px;color:#2563eb;"></i>
+              </div>
+              <div>
+                <p class="text-sm font-medium" style="color:#1a1a2e;">Compliance add-ons</p>
+                <p class="text-xs" style="color:#8890a4;">HIPAA audit trails and regulatory reporting</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 7: TEAM ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="frost-tag mb-4">THE TEAM</p>
+        <h2 class="text-4xl font-bold mb-3" style="color:#1a1a2e;">Built by Healthcare Insiders</h2>
+        <p class="text-base mb-10" style="color:#4a4a6a; max-width:560px;">
+          Deep domain expertise across clinical practice, health tech, and enterprise sales.
+        </p>
+
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Sarah -->
+          <div class="frost-card p-6 text-center">
+            <div class="avatar-circle mx-auto mb-4">SC</div>
+            <p class="text-base font-semibold mb-1" style="color:#1a1a2e;">Dr. Sarah Chen</p>
+            <p class="text-sm font-medium mb-3" style="color:#2563eb;">CEO &amp; Co-Founder</p>
+            <p class="text-sm" style="color:#4a4a6a;">10 years clinical practice. Former Director of Clinical Informatics at Epic Systems. MD, Stanford.</p>
+          </div>
+          <!-- Raj -->
+          <div class="frost-card p-6 text-center">
+            <div class="avatar-circle mx-auto mb-4">RP</div>
+            <p class="text-base font-semibold mb-1" style="color:#1a1a2e;">Raj Patel</p>
+            <p class="text-sm font-medium mb-3" style="color:#2563eb;">CTO &amp; Co-Founder</p>
+            <p class="text-sm" style="color:#4a4a6a;">Led ML infrastructure at Google Health. Formerly Verily Life Sciences. MS Computer Science, MIT.</p>
+          </div>
+          <!-- Lisa -->
+          <div class="frost-card p-6 text-center">
+            <div class="avatar-circle mx-auto mb-4">LT</div>
+            <p class="text-base font-semibold mb-1" style="color:#1a1a2e;">Lisa Torres</p>
+            <p class="text-sm font-medium mb-3" style="color:#2563eb;">CMO</p>
+            <p class="text-sm" style="color:#4a4a6a;">15 years in health system administration. Former VP at Kaiser Permanente. MBA, Wharton.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 8: ASK ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="w-full max-w-5xl mx-auto">
+        <p class="frost-tag mb-4">THE ASK</p>
+        <h2 class="text-4xl font-bold mb-3" style="color:#1a1a2e;">Seeking $12M Series A</h2>
+        <p class="text-base mb-10" style="color:#4a4a6a; max-width:560px;">
+          Fuel product expansion and capture the clinical AI market window.
+        </p>
+
+        <div class="grid grid-cols-2 gap-6">
+          <!-- Allocation -->
+          <div class="frost-card p-6">
+            <p class="text-sm font-semibold mb-5" style="color:#1a1a2e;">Use of Funds</p>
+
+            <div class="mb-4">
+              <div class="flex justify-between mb-1.5">
+                <span class="text-sm font-medium" style="color:#1a1a2e;">Product Development</span>
+                <span class="text-sm font-semibold" style="color:#2563eb;">35%</span>
+              </div>
+              <div class="alloc-bar"><div class="alloc-fill" style="width:35%;"></div></div>
+            </div>
+
+            <div class="mb-4">
+              <div class="flex justify-between mb-1.5">
+                <span class="text-sm font-medium" style="color:#1a1a2e;">Sales &amp; Go-to-Market</span>
+                <span class="text-sm font-semibold" style="color:#2563eb;">30%</span>
+              </div>
+              <div class="alloc-bar"><div class="alloc-fill" style="width:30%;"></div></div>
+            </div>
+
+            <div class="mb-4">
+              <div class="flex justify-between mb-1.5">
+                <span class="text-sm font-medium" style="color:#1a1a2e;">Compliance &amp; HIPAA</span>
+                <span class="text-sm font-semibold" style="color:#2563eb;">20%</span>
+              </div>
+              <div class="alloc-bar"><div class="alloc-fill" style="width:20%;"></div></div>
+            </div>
+
+            <div>
+              <div class="flex justify-between mb-1.5">
+                <span class="text-sm font-medium" style="color:#1a1a2e;">Operations</span>
+                <span class="text-sm font-semibold" style="color:#2563eb;">15%</span>
+              </div>
+              <div class="alloc-bar"><div class="alloc-fill" style="width:15%;"></div></div>
+            </div>
+          </div>
+
+          <!-- Key milestones -->
+          <div class="frost-card p-6">
+            <p class="text-sm font-semibold mb-5" style="color:#1a1a2e;">18-Month Milestones</p>
+
+            <div class="space-y-4">
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold" style="background:rgba(37,99,235,0.08); color:#2563eb;">1</div>
+                <div>
+                  <p class="text-sm font-medium" style="color:#1a1a2e;">100+ hospitals onboarded</p>
+                  <p class="text-xs" style="color:#8890a4;">Expand from 34 to 100+ partner hospitals</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold" style="background:rgba(37,99,235,0.08); color:#2563eb;">2</div>
+                <div>
+                  <p class="text-sm font-medium" style="color:#1a1a2e;">SOC 2 Type II &amp; HITRUST</p>
+                  <p class="text-xs" style="color:#8890a4;">Enterprise-grade compliance certifications</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold" style="background:rgba(37,99,235,0.08); color:#2563eb;">3</div>
+                <div>
+                  <p class="text-sm font-medium" style="color:#1a1a2e;">$8M ARR target</p>
+                  <p class="text-xs" style="color:#8890a4;">4x revenue growth in 18 months</p>
+                </div>
+              </div>
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold" style="background:rgba(37,99,235,0.08); color:#2563eb;">4</div>
+                <div>
+                  <p class="text-sm font-medium" style="color:#1a1a2e;">Launch specialty modules</p>
+                  <p class="text-xs" style="color:#8890a4;">Cardiology, oncology, and surgical specialties</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 9: VISION ===== -->
+  <div class="slide future" data-video="https://stream.mux.com/00qQnfNo7sSpn3pB1hYKkyeSDvxs01NxiQ3sr29uL3e028.m3u8">
+    <div class="video-bg-wrapper">
+      <video muted loop playsinline></video>
+      <div class="video-overlay"></div>
+    </div>
+    <div class="slide-content">
+      <div class="text-center max-w-3xl mx-auto">
+        <p class="frost-tag mb-6 mx-auto w-fit">OUR VISION</p>
+        <h2 class="text-5xl font-bold mb-6" style="color:#1a1a2e; line-height:1.15;">
+          Every clinician focused on<br />patients, <span style="color:#2563eb;">not paperwork</span>
+        </h2>
+        <p class="text-lg mb-12" style="color:#4a4a6a; max-width:520px; margin-left:auto; margin-right:auto;">
+          We're building the operating system for modern clinical care.
+        </p>
+
+        <div class="grid grid-cols-3 gap-5 max-w-2xl mx-auto mb-12">
+          <div class="frost-card p-5 text-center">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-3" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="hospital" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">200 Hospitals</p>
+            <p class="text-xs" style="color:#8890a4;">by 2026</p>
+          </div>
+          <div class="frost-card p-5 text-center">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-3" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="globe" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">International</p>
+            <p class="text-xs" style="color:#8890a4;">UK &amp; EU expansion</p>
+          </div>
+          <div class="frost-card p-5 text-center">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center mx-auto mb-3" style="background:rgba(37,99,235,0.08);">
+              <i data-lucide="home" style="width:20px;height:20px;color:#2563eb;"></i>
+            </div>
+            <p class="text-sm font-semibold mb-1" style="color:#1a1a2e;">Home Health</p>
+            <p class="text-xs" style="color:#8890a4;">Remote care integration</p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center gap-3">
+          <p class="text-sm font-medium" style="color:#4a4a6a;">Get in touch</p>
+          <a href="mailto:sarah@mediflow.health" class="text-sm font-semibold" style="color:#2563eb; text-decoration:none;">sarah@mediflow.health</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Keyboard hint -->
+<div class="keyboard-hint" id="keyboardHint">
+  <span style="opacity:0.6;">&larr;</span> <span style="opacity:0.6;">&rarr;</span> Navigate &middot; <span style="font-weight:600;">F</span> Fullscreen
+</div>
+
+<!-- Controls bar -->
+<div class="controls-bar" id="controlsBar">
+  <div class="slide-counter" id="slideCounter">1 / 9</div>
+  <div class="progress-dots" id="progressDots"></div>
+  <button id="btnPrev" aria-label="Previous slide">
+    <i data-lucide="chevron-left" style="width:18px;height:18px;"></i>
+  </button>
+  <button id="btnNext" aria-label="Next slide">
+    <i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
+  </button>
+  <button id="btnFullscreen" aria-label="Toggle fullscreen">
+    <i data-lucide="maximize" style="width:18px;height:18px;"></i>
+  </button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---- State ----
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let controlsTimer = null;
+  const HIDE_DELAY = 3000;
+
+  // ---- Elements ----
+  const controlsBar = document.getElementById('controlsBar');
+  const keyboardHint = document.getElementById('keyboardHint');
+  const slideCounter = document.getElementById('slideCounter');
+  const progressDots = document.getElementById('progressDots');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnFullscreen = document.getElementById('btnFullscreen');
+
+  // ---- Create progress dots ----
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', function () {
+      goToSlide(i);
+    });
+    progressDots.appendChild(dot);
+  }
+
+  // ---- HLS Video init ----
+  const hlsInstances = [];
+
+  function initVideoForSlide(slideEl) {
+    const videoUrl = slideEl.getAttribute('data-video');
+    if (!videoUrl) return;
+    const video = slideEl.querySelector('video');
+    if (!video || video.dataset.hlsInit) return;
+    video.dataset.hlsInit = 'true';
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({ enableWorker: true });
+      hls.loadSource(videoUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        video.play().catch(function () {});
+      });
+      hlsInstances.push(hls);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Safari fallback
+      video.src = videoUrl;
+      video.addEventListener('loadedmetadata', function () {
+        video.play().catch(function () {});
+      });
+    }
+  }
+
+  // Init first slide video immediately
+  initVideoForSlide(slides[0]);
+
+  // ---- Navigation ----
+  function goToSlide(index) {
+    if (index < 0 || index >= totalSlides || index === currentSlide) return;
+
+    slides.forEach(function (s, i) {
+      s.classList.remove('active', 'past', 'future');
+      if (i < index) {
+        s.classList.add('past');
+      } else if (i > index) {
+        s.classList.add('future');
+      } else {
+        s.classList.add('active');
+      }
+    });
+
+    currentSlide = index;
+
+    // Init video for new slide
+    initVideoForSlide(slides[currentSlide]);
+
+    // Pause videos on non-active slides, play active
+    slides.forEach(function (s, i) {
+      var v = s.querySelector('video');
+      if (!v) return;
+      if (i === currentSlide) {
+        v.play().catch(function () {});
+      } else {
+        v.pause();
+      }
+    });
+
+    updateUI();
+    showControls();
+  }
+
+  function nextSlide() {
+    goToSlide(currentSlide + 1);
+  }
+
+  function prevSlide() {
+    goToSlide(currentSlide - 1);
+  }
+
+  function updateUI() {
+    slideCounter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+    var dots = progressDots.querySelectorAll('.progress-dot');
+    dots.forEach(function (d, i) {
+      d.classList.toggle('active', i === currentSlide);
+    });
+  }
+
+  // ---- Controls visibility ----
+  function showControls() {
+    controlsBar.classList.add('visible');
+    keyboardHint.classList.add('visible');
+    clearTimeout(controlsTimer);
+    controlsTimer = setTimeout(hideControls, HIDE_DELAY);
+  }
+
+  function hideControls() {
+    controlsBar.classList.remove('visible');
+    keyboardHint.classList.remove('visible');
+  }
+
+  document.addEventListener('mousemove', showControls);
+  document.addEventListener('touchstart', showControls);
+
+  // Show on initial load
+  showControls();
+
+  // ---- Keyboard navigation ----
+  document.addEventListener('keydown', function (e) {
+    switch (e.key) {
+      case 'ArrowRight':
+      case ' ':
+        e.preventDefault();
+        nextSlide();
+        break;
+      case 'ArrowLeft':
+        e.preventDefault();
+        prevSlide();
+        break;
+      case 'f':
+      case 'F':
+        e.preventDefault();
+        toggleFullscreen();
+        break;
+    }
+  });
+
+  // ---- Button handlers ----
+  btnPrev.addEventListener('click', function (e) {
+    e.stopPropagation();
+    prevSlide();
+  });
+  btnNext.addEventListener('click', function (e) {
+    e.stopPropagation();
+    nextSlide();
+  });
+  btnFullscreen.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleFullscreen();
+  });
+
+  // ---- Fullscreen ----
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(function () {});
+    } else {
+      document.exitFullscreen().catch(function () {});
+    }
+  }
+
+  // ---- Initialize Lucide icons ----
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
+})();
+</script>
+
+</body>
+</html>
