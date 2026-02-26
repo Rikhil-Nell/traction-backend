@@ -86,7 +86,7 @@ for NINE document types.
 
 doc_agent = Agent(
     model="openai:gpt-4o-mini",
-    result_type=ExtractionResult,
+    output_type=ExtractionResult,
     system_prompt=_DOC_SYSTEM_PROMPT,
 )
 
@@ -138,7 +138,7 @@ Your output has **TWO** sections inside the HTML:
 
 design_agent = Agent(
     model="openai:gpt-4o-mini",
-    result_type=str,
+    output_type=str,
     system_prompt=_DESIGN_SYSTEM_PROMPT,
 )
 
@@ -162,7 +162,7 @@ Rules:
 
 document_content_agent = Agent(
     model="openai:gpt-4o-mini",
-    result_type=str,
+    output_type=str,
     system_prompt=_DOC_CONTENT_SYSTEM_PROMPT,
 )
 
@@ -189,7 +189,7 @@ Keep the tone neutral and factual.  Output plaintext only.
 
 llms_txt_agent = Agent(
     model="openai:gpt-4o-mini",
-    result_type=str,
+    output_type=str,
     system_prompt=_LLMS_TXT_SYSTEM_PROMPT,
 )
 
