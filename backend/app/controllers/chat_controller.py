@@ -184,11 +184,17 @@ async def _handle_doc_mode(
 
         new_fields = extracted_section.model_dump()
 
-        # Merge: non-null new values overwrite, null preserves existing
-        existing_fields = doc.fields or {}
+        # Copy existing fields into a NEW dict (ensures SQLAlchemy detects change)
+        existing_fields = dict(doc.fields) if doc.fields else {}
+        was_complete = existing_fields.get("is_complete", False)
+
         for key, value in new_fields.items():
             if value is not None:
                 existing_fields[key] = value
+
+        # Never downgrade: once a doc is complete, it stays complete
+        if was_complete:
+            existing_fields["is_complete"] = True
 
         doc.fields = existing_fields
 
@@ -395,12 +401,16 @@ async def send_message(
                 1 for info in extraction_state.values()
                 if not info.get("is_complete", False)
             )
+            incomplete_docs = [
+                doc_type for doc_type, info in extraction_state.items()
+                if not info.get("is_complete", False)
+            ]
             raise HTTPException(
                 status_code=422,
-                detail=json.dumps({
+                detail={
                     "message": "All 9 documents must be complete before generating designs.",
-                    "extraction_state": extraction_state,
                     "incomplete_count": incomplete_count,
-                }),
+                    "incomplete_docs": incomplete_docs,
+                },
             )
         return await _handle_design_mode(project, content, db)
