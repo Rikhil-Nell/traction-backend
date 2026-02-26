@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Column, JSON, Text, UniqueConstraint
+from sqlalchemy import Column, JSON, String, Text, UniqueConstraint
+from sqlalchemy.sql import quoted_name
 from sqlmodel import Field, Relationship
 
 from app.models.base import BaseUUIDModel
@@ -20,7 +21,7 @@ class Project(BaseUUIDModel, table=True):
     user_id: UUID = Field(foreign_key="users.id", index=True)
     name: str = Field(max_length=255)
     prompt: str = Field(default="", sa_column=Column(Text, default=""))
-    mode: str = Field(default="doc", max_length=20)  # "doc" or "design"
+    mode: str = Field(default="doc", sa_column=Column(quoted_name("mode", True), String(20), default="doc"))
     status: str = Field(default="draft", max_length=50)  # generating, draft, shared
 
     # Store array of strings as JSON
