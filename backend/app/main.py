@@ -1,6 +1,8 @@
+import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlmodel.ext.asyncio.session import AsyncSession
 from starlette.middleware.cors import CORSMiddleware
@@ -9,6 +11,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.api.v1.api import router
 from app.core.config import settings
 from app.db.database import engine, get_db
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -25,6 +29,18 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
+
+
+# ── Global Exception Handler (ensures 500s return JSON through CORS) ──
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception: %s", exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
 
 # ── Middleware ────────────────────────────────────────────────
 

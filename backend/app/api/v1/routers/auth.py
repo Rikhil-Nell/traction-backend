@@ -57,7 +57,7 @@ async def google_callback(
     )
 
     # Issue tokens and redirect to dashboard
-    redirect = RedirectResponse(url="https://traction-ai.me/projects", status_code=302)
+    redirect = RedirectResponse(url="https://traction-ai.me/dashboard", status_code=302)
     await auth_controller.issue_tokens(user, redirect, db)
     return redirect
 
