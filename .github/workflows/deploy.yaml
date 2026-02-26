@@ -22,6 +22,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          no-cache: true
           tags: remiscus/traction-backend:latest
       
       - name: Deploy to VPS
