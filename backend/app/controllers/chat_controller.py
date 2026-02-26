@@ -9,6 +9,7 @@ Chat controller with dual-mode (doc / design) logic.
 
 import uuid
 import json
+import asyncio
 import logging
 from datetime import datetime, timezone
 
@@ -307,39 +308,54 @@ async def _handle_design_mode(
         # Build all_fields dict from documents
         all_fields = {doc.type: doc.fields or {} for doc in documents}
 
-        # --- Step 1: Generate full HTML deck ---
-        full_html = await generate_full_html(project.name, all_fields)
-        project.full_html = full_html
-        db.add(project)
-        await db.flush()
-        logger.info("HTML deck generated for project %s", project.id)
-
-        # --- Step 2: Generate individual document contents (fail gracefully per doc) ---
-        for doc in documents:
+        # --- Run ALL LLM calls concurrently to stay under Cloudflare's 100s timeout ---
+        async def _gen_doc(doc):
             try:
-                doc_content = await generate_document_content(
+                content = await generate_document_content(
                     doc.type, project.name, doc.fields or {}
                 )
-                doc.content = doc_content
+                return (doc, content, None)
+            except Exception as e:
+                return (doc, None, e)
+
+        async def _gen_llms():
+            try:
+                return await generate_llms_txt(project.name, all_fields)
+            except Exception:
+                logger.warning("Failed to generate llms.txt for project %s", project.id, exc_info=True)
+                return None
+
+        # Fire all LLM calls at once: HTML deck + 9 doc contents + llms.txt
+        results = await asyncio.gather(
+            generate_full_html(project.name, all_fields),
+            *[_gen_doc(doc) for doc in documents],
+            _gen_llms(),
+        )
+
+        # Unpack results: [full_html, *doc_results, llms_txt]
+        full_html = results[0]
+        doc_results = results[1:-1]
+        llms_txt = results[-1]
+
+        # Apply HTML deck
+        project.full_html = full_html
+        logger.info("HTML deck generated for project %s", project.id)
+
+        # Apply document contents
+        for doc, content, err in doc_results:
+            if err:
+                logger.warning("Failed to generate content for doc %s (project %s): %s", doc.type, project.id, err)
+            elif content:
+                doc.content = content
                 doc.status = "ready"
                 db.add(doc)
-            except Exception as doc_err:
-                logger.warning(
-                    "Failed to generate content for doc %s (project %s): %s",
-                    doc.type, project.id, doc_err,
-                )
-        await db.flush()
 
-        # --- Step 3: Generate llms.txt (non-critical) ---
-        try:
-            llms_txt = await generate_llms_txt(project.name, all_fields)
+        # Apply llms.txt
+        if llms_txt:
             project.llms_txt = llms_txt
-        except Exception as llms_err:
-            logger.warning("Failed to generate llms.txt for project %s: %s", project.id, llms_err)
 
-        # --- Step 4: Generate ai.json (deterministic, should not fail) ---
-        ai_json = await generate_ai_json(project.name, all_fields)
-        project.ai_json = ai_json
+        # Generate ai.json (deterministic, no LLM)
+        project.ai_json = await generate_ai_json(project.name, all_fields)
 
         # Store hash so next call can skip if nothing changed
         project.last_generation_fields_hash = current_hash
