@@ -23,6 +23,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
     response.set_cookie(
         key="access_token",
         value=access_token,
+        domain=".traction-ai.me",
         httponly=True,
         secure=is_secure,
         samesite="lax",
@@ -32,6 +33,7 @@ def _set_auth_cookies(response: Response, access_token: str, refresh_token: str)
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
+        domain=".traction-ai.me",
         httponly=True,
         secure=is_secure,
         samesite="lax",
