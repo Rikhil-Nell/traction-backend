@@ -1,113 +1,93 @@
-"""Chat controller — all business logic for conversations and messages."""
-
 import uuid
 
 from fastapi import HTTPException
-from openai import AsyncOpenAI
+from pydantic_ai import Agent, RunContext
 from sqlalchemy import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.core.config import settings
-from app.models.chat import Conversation, Message
+from app.controllers import project_controller
+from app.models.chat_message import ChatMessage
 from app.models.user import User
 
 
-def _get_openai_client() -> AsyncOpenAI:
-    """Create an OpenAI async client."""
-    return AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-
-async def create_conversation(
-    user: User,
-    title: str,
-    db: AsyncSession,
-) -> Conversation:
-    """Create a new conversation for the user."""
-    conversation = Conversation(user_id=user.id, title=title)
-    db.add(conversation)
-    await db.flush()
-    await db.refresh(conversation)
-    return conversation
-
-
-async def list_conversations(
-    user: User,
-    db: AsyncSession,
-) -> list[Conversation]:
-    """List all conversations for the user, newest first."""
-    result = await db.execute(
-        select(Conversation)
-        .where(Conversation.user_id == user.id)
-        .order_by(Conversation.created_at.desc())
+# Define our basic Agent. We will inject the DB session via RunContext.
+# This allows the AI to perform structured updates if we define tools for it later.
+chat_agent = Agent(
+    model="openai:gpt-4o-mini",
+    deps_type=AsyncSession,
+    system_prompt=(
+        "You are an expert AI product designer and ideation assistant. "
+        "Your goal is to help the user flesh out their project ideas and structure them into "
+        "coherent product documentation. Offer insightful suggestions and ask clarifying questions."
     )
-    return list(result.scalars().all())
+)
 
 
-async def get_conversation_messages(
+async def get_project_messages(
     user: User,
-    conversation_id: uuid.UUID,
+    project_id: uuid.UUID,
     db: AsyncSession,
-) -> list[Message]:
-    """Get all messages for a conversation, verifying ownership."""
-    conversation = await _get_user_conversation(user, conversation_id, db)
+) -> list[ChatMessage]:
+    """Get all messages for a specific project, verifying ownership."""
+    project = await project_controller.get_project(user, project_id, db)
+    
     result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == conversation.id)
-        .order_by(Message.created_at.asc())
+        select(ChatMessage)
+        .where(ChatMessage.project_id == project.id)
+        .order_by(ChatMessage.created_at.asc())
     )
     return list(result.scalars().all())
 
 
 async def send_message(
     user: User,
-    conversation_id: uuid.UUID,
+    project_id: uuid.UUID,
     content: str,
     db: AsyncSession,
-) -> Message:
+) -> dict:
     """
-    Send a user message, call OpenAI, and return the assistant's response.
-
-    Steps:
-    1. Verify conversation ownership
-    2. Save user message
-    3. Build message history for OpenAI
-    4. Call OpenAI chat completion
-    5. Save and return assistant message
+    Send a user message, call Pydantic AI, and return the assistant's response.
+    Returns a dict containing the new message and tracking updates.
     """
-    conversation = await _get_user_conversation(user, conversation_id, db)
+    project = await project_controller.get_project(user, project_id, db)
 
-    # Save user message
-    user_message = Message(
-        conversation_id=conversation.id,
+    # 1. Save user message
+    user_message = ChatMessage(
+        project_id=project.id,
         role="user",
         content=content,
     )
     db.add(user_message)
     await db.flush()
 
-    # Build history for OpenAI
+    # 2. Build history for Pydantic AI (Optional: Pydantic AI can handle history, 
+    # but for manual DB parity we often just pass the immediate prompt or format 
+    # it into an array of dicts if using the raw provider, but here we'll let Pydantic AI run).
+    # For robust history, we'd reconstruct the `pydantic_ai.messages` structures from DB.
+    # For v1, we will just send the immediate text with the context, but real usage would look like this:
     result = await db.execute(
-        select(Message)
-        .where(Message.conversation_id == conversation.id)
-        .order_by(Message.created_at.asc())
+        select(ChatMessage)
+        .where(ChatMessage.project_id == project.id)
+        .order_by(ChatMessage.created_at.asc())
     )
     messages = result.scalars().all()
-    openai_messages = [{"role": m.role, "content": m.content} for m in messages]
+    
+    # Optional: Format history into a string context if not using strict Pydantic AI history arrays
+    history_context = "\n".join([f"{m.role}: {m.content}" for m in messages[:-1]])
+    
+    prompt = f"Previous conversation:\n{history_context}\n\nUser: {content}" if history_context else content
 
-    # Call OpenAI
-    client = _get_openai_client()
+    # 3. Call Pydantic AI
     try:
-        response = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=openai_messages,
-        )
-        assistant_content = response.choices[0].message.content or ""
+        # We pass the db session as dependency so tools can use it if added later
+        ai_result = await chat_agent.run(prompt, deps=db)
+        assistant_content = ai_result.data
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"OpenAI error: {str(e)}")
+        raise HTTPException(status_code=502, detail=f"Pydantic AI error: {str(e)}")
 
-    # Save assistant message
-    assistant_message = Message(
-        conversation_id=conversation.id,
+    # 4. Save assistant message
+    assistant_message = ChatMessage(
+        project_id=project.id,
         role="assistant",
         content=assistant_content,
     )
@@ -115,30 +95,8 @@ async def send_message(
     await db.flush()
     await db.refresh(assistant_message)
 
-    # Update conversation title on first message
-    if len(openai_messages) == 1:
-        conversation.title = content[:60] + ("..." if len(content) > 60 else "")
-
-    return assistant_message
-
-
-async def delete_conversation(
-    user: User,
-    conversation_id: uuid.UUID,
-    db: AsyncSession,
-) -> None:
-    """Delete a conversation and all its messages."""
-    conversation = await _get_user_conversation(user, conversation_id, db)
-    await db.delete(conversation)
-
-
-async def _get_user_conversation(
-    user: User,
-    conversation_id: uuid.UUID,
-    db: AsyncSession,
-) -> Conversation:
-    """Fetch a conversation and verify ownership."""
-    conversation = await db.get(Conversation, conversation_id)
-    if not conversation or conversation.user_id != user.id:
-        raise HTTPException(status_code=404, detail="Conversation not found")
-    return conversation
+    # Return structure matching frontend expectations for documentsUpdated
+    return {
+        "message": assistant_message,
+        "documentsUpdated": [] # Placeholder for when the AI uses tools to update documents
+    }

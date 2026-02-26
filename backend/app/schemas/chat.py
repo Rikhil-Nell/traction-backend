@@ -1,29 +1,21 @@
 import datetime
-import uuid
+from uuid import UUID
 
 from pydantic import BaseModel
 
 
-class ConversationCreate(BaseModel):
-    title: str = "New Chat"
-
-
-class ConversationRead(BaseModel):
-    id: uuid.UUID
-    title: str
-    created_at: datetime.datetime
-
-    model_config = {"from_attributes": True}
-
-
-class MessageCreate(BaseModel):
-    content: str
-
-
-class MessageRead(BaseModel):
-    id: uuid.UUID
+class ChatMessageBase(BaseModel):
     role: str
     content: str
+
+
+class ChatMessageCreate(BaseModel):
+    content: str
+
+
+class ChatMessageRead(ChatMessageBase):
+    id: UUID
+    project_id: UUID
     created_at: datetime.datetime
 
     model_config = {"from_attributes": True}
