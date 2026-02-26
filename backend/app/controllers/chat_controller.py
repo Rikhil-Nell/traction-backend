@@ -120,7 +120,7 @@ async def _handle_doc_mode(
     # --- build current extraction state ---
     current_state = build_extraction_state(documents)
 
-    # --- load message history ---
+    # --- load message history BEFORE saving the new user message ---
     result = await db.execute(
         select(ChatMessage)
         .where(ChatMessage.project_id == project.id)
@@ -131,6 +131,15 @@ async def _handle_doc_mode(
     # Build a simple string history for the agent (no pydantic_ai message objects)
     history_lines = [f"{m.role}: {m.content}" for m in messages]
     history_text = "\n".join(history_lines)
+
+    # --- save user message ---
+    user_message = ChatMessage(
+        project_id=project.id,
+        role="user",
+        content=content,
+    )
+    db.add(user_message)
+    await db.flush()
 
     # --- set project.prompt from first user message if still empty ---
     if not project.prompt:
@@ -353,6 +362,13 @@ async def send_message(
     * Updates the project mode if it has changed.
     * Delegates to ``_handle_doc_mode`` or ``_handle_design_mode``.
     """
+    # Validate mode before any mutations
+    if mode not in ("doc", "design"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid mode '{mode}'. Must be 'doc' or 'design'.",
+        )
+
     project = await project_controller.get_project(user, project_id, db)
 
     # Update mode on the project if caller switched modes
@@ -362,23 +378,7 @@ async def send_message(
         await db.flush()
 
     if mode == "doc":
-        # Save user message before entering doc handler
-        user_message = ChatMessage(
-            project_id=project.id,
-            role="user",
-            content=content,
-        )
-        db.add(user_message)
-        await db.flush()
-
         return await _handle_doc_mode(project, content, db)
 
-    elif mode == "design":
-        # _handle_design_mode saves the user message itself
-        return await _handle_design_mode(project, content, db)
-
     else:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid mode '{mode}'. Must be 'doc' or 'design'.",
-        )
+        return await _handle_design_mode(project, content, db)

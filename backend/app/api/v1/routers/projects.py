@@ -104,7 +104,7 @@ async def trigger_deck_generation(
     db: AsyncSession = Depends(get_db),
 ):
     """Trigger the AI to build or rebuild the presentation deck."""
-    return await generation_controller.generate_deck(user, project_id, payload.theme, db)
+    return await generation_controller.generate_deck(user, project_id, db)
 
 
 @router.post("/{project_id}/generate-documents", response_model=list[ProjectDocumentRead])

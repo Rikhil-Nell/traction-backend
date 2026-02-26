@@ -49,3 +49,4 @@ async def delete_user(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     await db.delete(user)
+    await db.commit()

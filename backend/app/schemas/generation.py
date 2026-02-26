@@ -5,11 +5,15 @@ class GenerateDeckRequest(pydantic.BaseModel):
     aesthetic: str = "minimal"
 
 class GenerateDocumentsRequest(pydantic.BaseModel):
-    # If empty, generate all standard types
+    # If empty, generate all standard 9 types
     document_types: list[str] = [
         "product-description",
+        "timeline",
         "swot-analysis",
         "market-research",
-        "user-personas",
-        "feature-roadmap"
+        "financial-projections",
+        "funding-requirements",
+        "product-forecast",
+        "competitive-analysis",
+        "executive-summary",
     ]
