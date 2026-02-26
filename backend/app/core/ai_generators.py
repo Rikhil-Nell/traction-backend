@@ -134,7 +134,7 @@ You must return content for every single slide:
 """
 
 deck_content_agent = Agent(
-    model="openai:gpt-5",
+    model="openai:gpt-5.2",
     output_type=PitchDeckContent,
     system_prompt=_DECK_CONTENT_SYSTEM_PROMPT,
     retries=3,
