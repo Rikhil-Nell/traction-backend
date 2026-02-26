@@ -266,7 +266,7 @@ async def generate_document_content(doc_type: str, project_name: str, fields: di
         f"Output polished markdown only."
     )
     result = await document_content_agent.run(prompt)
-    return result.data
+    return result.output
 
 
 async def generate_full_html(project_name: str, all_fields: dict) -> str:
@@ -284,7 +284,7 @@ async def generate_full_html(project_name: str, all_fields: dict) -> str:
         f"Structured startup data:\n{json.dumps(all_fields, indent=2, default=str)}"
     )
     result = await design_agent.run(prompt)
-    return result.data
+    return result.output
 
 
 async def generate_llms_txt(project_name: str, all_fields: dict) -> str:
@@ -302,7 +302,7 @@ async def generate_llms_txt(project_name: str, all_fields: dict) -> str:
         f"Structured data:\n{json.dumps(all_fields, indent=2, default=str)}"
     )
     result = await llms_txt_agent.run(prompt)
-    return result.data
+    return result.output
 
 
 async def generate_ai_json(project_name: str, all_fields: dict) -> dict:

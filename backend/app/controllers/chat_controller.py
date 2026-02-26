@@ -158,8 +158,8 @@ async def _handle_doc_mode(
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Doc-agent error: {str(e)}")
 
-    # ai_result.data is an ExtractionResult (structured output from pydantic-ai)
-    extraction: object = ai_result.data
+    # ai_result.output is an ExtractionResult (structured output from pydantic-ai)
+    extraction: object = ai_result.output
     assistant_content: str = extraction.response
 
     # --- save assistant message ---
