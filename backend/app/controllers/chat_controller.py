@@ -387,4 +387,20 @@ async def send_message(
         return await _handle_doc_mode(project, content, db)
 
     else:
+        # Gate: all 9 docs must be complete before design mode
+        documents = await _ensure_documents_exist(project, db)
+        extraction_state = build_extraction_state(documents)
+        if not check_all_complete(extraction_state):
+            incomplete_count = sum(
+                1 for info in extraction_state.values()
+                if not info.get("is_complete", False)
+            )
+            raise HTTPException(
+                status_code=422,
+                detail=json.dumps({
+                    "message": "All 9 documents must be complete before generating designs.",
+                    "extraction_state": extraction_state,
+                    "incomplete_count": incomplete_count,
+                }),
+            )
         return await _handle_design_mode(project, content, db)

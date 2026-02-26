@@ -4,7 +4,7 @@ Dual-mode AI agent system for Traction.
 Agents
 ------
 - **doc_agent**              – Structured interview / field extraction (doc mode)
-- **design_agent**           – Full HTML pitch-deck generation (design mode)
+- **deck_content_agent**     – Structured JSON content for pitch deck slides
 - **document_content_agent** – Writes polished markdown for individual documents
 - **llms_txt_agent**         – Writes plaintext startup description for AI agents
 
@@ -21,6 +21,8 @@ from app.schemas.extraction import (
     DOCUMENT_TYPE_TO_ATTR,
     DOCUMENT_TYPE_TITLES,
 )
+from app.schemas.deck_content import PitchDeckContent
+from app.core.deck_template import render_pitch_deck
 
 
 # ---------------------------------------------------------------------------
@@ -33,49 +35,57 @@ interview to help a founder flesh out their startup idea.  Your job is to have a
 natural, conversational dialogue while progressively extracting structured data \
 for NINE document types.
 
-## Document types and their fields
+## Document types, fields, and REQUIRED fields for completion
+
+Each document type has REQUIRED fields (marked with *) and optional fields.
+Set ``is_complete=True`` when ALL REQUIRED fields have values.
+Optional fields enhance quality but are NOT blockers for completion.
 
 1. **Product Description**
-   - product_name, one_liner, problem_statement, solution_description,
-     target_audience, key_features (list[str]), unique_value_proposition
+   - *product_name, one_liner, *problem_statement, *solution_description,
+     *target_audience, key_features (list[str]), unique_value_proposition
 
 2. **Timeline**
-   - milestones (list[dict]), current_stage, launch_date
+   - milestones (list[dict]) — at least 1 required*, *current_stage, launch_date
 
 3. **SWOT Analysis**
-   - strengths (list[str]), weaknesses (list[str]),
+   - *strengths (list[str]) — at least 1 required, *weaknesses (list[str]) — at least 1 required,
      opportunities (list[str]), threats (list[str])
 
 4. **Market Research**
-   - tam, sam, som, target_demographics, market_trends (list[str]),
-     market_growth_rate
+   - tam*, target_demographics* — at least ONE of these two is required,
+     sam, som, market_trends (list[str]), market_growth_rate
 
 5. **Financial Projections**
-   - revenue_model, year1_revenue, year2_revenue, year3_revenue,
+   - *revenue_model, year1_revenue, year2_revenue, year3_revenue,
      monthly_burn_rate, break_even_timeline, key_cost_drivers (list[str])
 
 6. **Funding Requirements**
-   - funding_stage, amount_seeking, use_of_funds (list[dict]),
+   - *funding_stage, *amount_seeking, use_of_funds (list[dict]),
      current_funding, runway_months (int)
 
 7. **Product Forecast**
-   - year1_users, year2_users, year3_users, conversion_rate,
-     customer_acquisition_cost, lifetime_value, growth_strategy
+   - *growth_strategy, year1_users, year2_users, year3_users, conversion_rate,
+     customer_acquisition_cost, lifetime_value
 
 8. **Competitive Analysis**
-   - direct_competitors (list[dict]), indirect_competitors (list[str]),
-     competitive_advantage, market_positioning
+   - *competitive_advantage, direct_competitors (list[dict]),
+     indirect_competitors (list[str]), market_positioning
 
 9. **Executive Summary**
-   - company_name, mission_statement, vision_statement,
+   - *company_name, *mission_statement, vision_statement,
      founding_team (list[dict]), business_model_summary, traction_to_date
 
 ## Rules
 
 - Only extract data the user has **explicitly** mentioned.  Never invent or \
   assume values.
-- Set ``is_complete`` to ``True`` for a document type **only** when ALL of its \
-  fields have been populated.
+- Set ``is_complete`` to ``True`` when the REQUIRED fields (marked with * above) \
+  have values.  Optional fields can remain null — they enhance quality but are \
+  not blockers.
+- If the user provides information that clearly maps to multiple document types \
+  in a single message, extract and populate ALL applicable fields across ALL \
+  document types, not just the one being discussed.
 - Do **not** make up data to fill gaps.
 - Naturally guide the conversation toward uncovered fields without being \
   formulaic or robotic—ask follow-up questions, give brief examples, and \
@@ -92,54 +102,32 @@ doc_agent = Agent(
 
 
 # ---------------------------------------------------------------------------
-# 2.  Design-mode agent  (full HTML pitch deck)
+# 2.  Deck content agent  (structured JSON for pitch deck slides)
 # ---------------------------------------------------------------------------
 
-_DESIGN_SYSTEM_PROMPT = """\
-You are a world-class pitch-deck designer.  Given structured startup data you \
-create a **bespoke, single-file HTML pitch deck** that is visually stunning and \
-investor-ready.
+_DECK_CONTENT_SYSTEM_PROMPT = """\
+You are a world-class pitch-deck strategist.  Given structured startup data, \
+produce compelling slide content as structured JSON.
 
-## Design requirements
+## Guidelines
 
-- Use the **Plus Jakarta Sans** font (import from Google Fonts).
-- Dark / black background theme throughout.
-- Use ``clamp()`` for all font sizes and spacing so the deck scales fluidly \
-  across screen sizes.
-- Aim for a **liquid glass** aesthetic: subtle glassmorphism cards, soft \
-  gradients, gentle glow effects, semi-transparent surfaces.
-- The deck must be a **full-screen, slide-based presentation**:
-  - One ``<section>`` per slide, each taking ``100vh`` / ``100vw``.
-  - Include keyboard navigation (ArrowRight / ArrowLeft / Space) and a small \
-    progress indicator.
-
-## Output structure
-
-Your output has **TWO** sections inside the HTML:
-
-1. **Pitch deck slides** (creative, visually rich, storytelling order):
-   - Title slide, Problem, Solution, Market size, Business model, Traction, \
-     Team, Financial highlights, Ask / CTA — plus any extra slides that suit \
-     the data.
-
-2. **Summary section** (appended after the last slide, strict formatting):
-   - Key metrics displayed in a grid.
-   - Risks and mitigations.
-   - Links / references to each document type.
-   - Use clean tables or definition lists—no creative liberties here.
-
-## Rules
-
-- Output **raw HTML only**.  No markdown fences, no explanation, no preamble.
-- The HTML must be completely self-contained (inline ``<style>`` and \
-  ``<script>``).
-- Every slide must render correctly if opened directly in a browser.
+- Write **persuasive headlines**, not labels.  E.g. "We're solving a $4.2B \
+  problem" not "Problem".
+- Include concrete numbers from the data wherever possible.
+- Make body_points punchy—max 8 words each.
+- Fill accent_metric with the single most impressive number per slide.
+- For the cover slide: headline = company name, subheadline = one-liner.
+- For the market slide: populate tam/sam/som if available in the data.
+- For the team slide: populate team_members with name, role, bio if available.
+- For the ask slide: populate funding_amount and use_of_funds if available.
+- Never invent numbers.  If data is missing, write compelling qualitative \
+  content instead.
 """
 
-design_agent = Agent(
+deck_content_agent = Agent(
     model="openai:gpt-4o-mini",
-    output_type=str,
-    system_prompt=_DESIGN_SYSTEM_PROMPT,
+    output_type=PitchDeckContent,
+    system_prompt=_DECK_CONTENT_SYSTEM_PROMPT,
 )
 
 
@@ -270,7 +258,10 @@ async def generate_document_content(doc_type: str, project_name: str, fields: di
 
 
 async def generate_full_html(project_name: str, all_fields: dict) -> str:
-    """Use the *design_agent* to produce a complete pitch-deck HTML string.
+    """Generate a pitch-deck HTML string via structured AI content + template.
+
+    1. The *deck_content_agent* produces a ``PitchDeckContent`` (structured JSON).
+    2. ``render_pitch_deck`` renders that into deterministic, high-quality HTML.
 
     Parameters
     ----------
@@ -280,11 +271,12 @@ async def generate_full_html(project_name: str, all_fields: dict) -> str:
         Mapping of ``{doc_type: fields_dict}`` for every document type.
     """
     prompt = (
-        f"Create a full pitch-deck HTML presentation for '{project_name}'.\n\n"
-        f"Structured startup data:\n{json.dumps(all_fields, indent=2, default=str)}"
+        f"Create pitch deck content for '{project_name}'.\n\n"
+        f"Data:\n{json.dumps(all_fields, indent=2, default=str)}"
     )
-    result = await design_agent.run(prompt)
-    return result.output
+    result = await deck_content_agent.run(prompt)
+    content: PitchDeckContent = result.output
+    return render_pitch_deck(content, project_name)
 
 
 async def generate_llms_txt(project_name: str, all_fields: dict) -> str:
