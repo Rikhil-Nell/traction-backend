@@ -14,3 +14,4 @@ set-secrets.ps1
 traction-ai-docs.md
 voiceiq.pem
 docker-compose.yml
+.vscode
