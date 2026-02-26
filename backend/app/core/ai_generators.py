@@ -109,25 +109,35 @@ _DECK_CONTENT_SYSTEM_PROMPT = """\
 You are a world-class pitch-deck strategist.  Given structured startup data, \
 produce compelling slide content as structured JSON.
 
-## Guidelines
+## CRITICAL: You MUST populate ALL 9 slides
+
+You must return content for every single slide:
+1. **cover** — headline = company name, subheadline = one-liner
+2. **problem** — the pain points being solved
+3. **solution** — how the product solves the problem
+4. **market** — market size and opportunity (populate tam/sam/som if available)
+5. **traction** — key metrics and milestones achieved
+6. **business_model** — how the company makes money
+7. **team** — founding team (populate team_members if available)
+8. **ask** — funding request (populate funding_amount and use_of_funds if available)
+9. **vision** — future vision and closing statement
+
+## Content guidelines
 
 - Write **persuasive headlines**, not labels.  E.g. "We're solving a $4.2B \
   problem" not "Problem".
 - Include concrete numbers from the data wherever possible.
-- Make body_points punchy—max 8 words each.
+- Make body_points punchy—max 8 words each.  3-5 points per slide.
 - Fill accent_metric with the single most impressive number per slide.
-- For the cover slide: headline = company name, subheadline = one-liner.
-- For the market slide: populate tam/sam/som if available in the data.
-- For the team slide: populate team_members with name, role, bio if available.
-- For the ask slide: populate funding_amount and use_of_funds if available.
 - Never invent numbers.  If data is missing, write compelling qualitative \
   content instead.
 """
 
 deck_content_agent = Agent(
-    model="openai:gpt-4o-mini",
+    model="openai:gpt-4o",
     output_type=PitchDeckContent,
     system_prompt=_DECK_CONTENT_SYSTEM_PROMPT,
+    retries=3,
 )
 
 
