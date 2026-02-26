@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from sqlalchemy import select
+from sqlalchemy.orm.attributes import flag_modified
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.controllers import project_controller
@@ -178,28 +179,47 @@ async def _handle_doc_mode(
         if attr_name is None:
             continue
 
+        # Once a doc is complete, its data is finalized — skip entirely
+        existing = doc.fields or {}
+        if existing.get("is_complete", False):
+            continue
+
         extracted_section = getattr(extraction, attr_name, None)
         if extracted_section is None:
             continue
 
         new_fields = extracted_section.model_dump()
 
-        # Copy existing fields into a NEW dict (ensures SQLAlchemy detects change)
-        existing_fields = dict(doc.fields) if doc.fields else {}
-        was_complete = existing_fields.get("is_complete", False)
+        # Build a NEW dict (required: SQLAlchemy JSON columns don't track
+        # in-place mutations, so we must assign a different object)
+        merged = dict(existing)
 
         for key, value in new_fields.items():
-            if value is not None:
-                existing_fields[key] = value
+            if key == "is_complete":
+                # Only upgrade False→True, never downgrade
+                if value is True:
+                    merged["is_complete"] = True
+                continue
 
-        # Never downgrade: once a doc is complete, it stays complete
-        if was_complete:
-            existing_fields["is_complete"] = True
+            if value is None:
+                continue
 
-        doc.fields = existing_fields
+            # Never replace a populated value with an empty one
+            old = merged.get(key)
+            if old is not None and old != [] and old != "" and old != {}:
+                # Only overwrite if new value is also substantive
+                if isinstance(value, list) and len(value) == 0:
+                    continue
+                if isinstance(value, str) and len(value) == 0:
+                    continue
+
+            merged[key] = value
+
+        doc.fields = merged
+        flag_modified(doc, "fields")
 
         # Update document status based on is_complete flag
-        is_complete = existing_fields.get("is_complete", False)
+        is_complete = merged.get("is_complete", False)
         doc.status = "ready" if is_complete else "pending"
 
         db.add(doc)
