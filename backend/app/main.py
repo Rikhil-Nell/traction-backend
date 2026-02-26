@@ -39,11 +39,8 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
     # Production
-    "https://nebularblazar.com",
-    "https://www.nebularblazar.com",
-    "https://remiscus.me",
-    "https://www.remiscus.me",
-    "https://app.remiscus.me",
+    "https://traction-ai.me",
+    "https://www.traction-ai.me",
 ]
 
 app.add_middleware(

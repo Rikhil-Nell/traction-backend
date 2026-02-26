@@ -10,9 +10,7 @@ from app.core.config import settings
 from app.core.security import (
     create_access_token,
     create_refresh_token,
-    hash_password,
     hash_token,
-    verify_password,
 )
 from app.models.oauth_account import OAuthAccount
 from app.models.refresh_token import RefreshToken
@@ -121,55 +119,7 @@ async def handle_oauth_callback(
     return user
 
 
-# ── Username / Password Auth ─────────────────────────────────
 
-async def handle_register(
-    email: str,
-    username: str,
-    password: str,
-    db: AsyncSession,
-) -> User:
-    """Register a new user with email + username + password."""
-    # Check email uniqueness
-    result = await db.execute(select(User).where(User.email == email))
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Email already registered")
-
-    # Check username uniqueness
-    result = await db.execute(select(User).where(User.username == username))
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Username already taken")
-
-    user = User(
-        email=email,
-        username=username,
-        hashed_password=hash_password(password),
-    )
-    db.add(user)
-    await db.flush()
-    await db.refresh(user)
-    return user
-
-
-async def handle_login(
-    username: str,
-    password: str,
-    db: AsyncSession,
-) -> User:
-    """Authenticate a user by username + password."""
-    result = await db.execute(select(User).where(User.username == username))
-    user = result.scalar_one_or_none()
-
-    if not user or not user.hashed_password:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    if not verify_password(password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    if not user.is_active:
-        raise HTTPException(status_code=401, detail="Account is inactive")
-
-    return user
 
 
 # ── Token Issuance ────────────────────────────────────────────

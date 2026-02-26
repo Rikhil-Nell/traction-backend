@@ -16,12 +16,4 @@ class UserProfile(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    username: str
-    password: str
 
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str

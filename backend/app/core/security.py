@@ -5,7 +5,6 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import Depends, HTTPException, Request, status
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -14,18 +13,7 @@ from app.db.database import get_db
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 
-# ── Password hashing (bcrypt) ────────────────────────────────
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
-def hash_password(password: str) -> str:
-    """Hash a password with bcrypt."""
-    return pwd_context.hash(password)
-
-
-def verify_password(plain: str, hashed: str) -> bool:
-    """Verify a plain password against a bcrypt hash."""
-    return pwd_context.verify(plain, hashed)
 
 
 # ── JWT access tokens ────────────────────────────────────────

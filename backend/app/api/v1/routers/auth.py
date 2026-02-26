@@ -11,7 +11,7 @@ from app.db.database import get_db
 from app.core.oauth import oauth
 from app.core.security import get_current_user
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RegisterRequest, UserProfile
+from app.schemas.auth import UserProfile
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -62,39 +62,7 @@ async def google_callback(
     return redirect
 
 
-# ── Username / Password Auth ─────────────────────────────────
 
-@router.post("/register", response_model=UserProfile)
-async def register(
-    payload: RegisterRequest,
-    response: Response,
-    db: AsyncSession = Depends(get_db),
-):
-    """Register a new user with email + username + password."""
-    user = await auth_controller.handle_register(
-        email=payload.email,
-        username=payload.username,
-        password=payload.password,
-        db=db,
-    )
-    await auth_controller.issue_tokens(user, response, db)
-    return user
-
-
-@router.post("/login", response_model=UserProfile)
-async def login(
-    payload: LoginRequest,
-    response: Response,
-    db: AsyncSession = Depends(get_db),
-):
-    """Authenticate with username + password."""
-    user = await auth_controller.handle_login(
-        username=payload.username,
-        password=payload.password,
-        db=db,
-    )
-    await auth_controller.issue_tokens(user, response, db)
-    return user
 
 
 # ── Token Management ─────────────────────────────────────────

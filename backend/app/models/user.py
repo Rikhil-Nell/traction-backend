@@ -15,7 +15,6 @@ class User(BaseUUIDModel, table=True):
 
     email: str = Field(max_length=320, unique=True, index=True)
     username: str = Field(max_length=50, unique=True, index=True)
-    hashed_password: str | None = Field(default=None, max_length=128)
     display_name: str | None = Field(default=None, max_length=100)
     avatar_url: str | None = Field(default=None, max_length=500)
     is_active: bool = Field(default=True)
