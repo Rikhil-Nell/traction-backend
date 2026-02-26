@@ -4,7 +4,7 @@ Dual-mode AI agent system for Traction.
 Agents
 ------
 - **doc_agent**              – Structured interview / field extraction (doc mode)
-- **deck_content_agent**     – Structured JSON content for pitch deck slides
+- **html_deck_agent**        – Generates full HTML pitch decks from reference themes
 - **document_content_agent** – Writes polished markdown for individual documents
 - **llms_txt_agent**         – Writes plaintext startup description for AI agents
 
@@ -13,6 +13,8 @@ Utility helpers handle hashing, state building, and orchestrating generation.
 
 import json
 import hashlib
+import random
+from pathlib import Path
 
 from pydantic_ai import Agent
 
@@ -21,8 +23,17 @@ from app.schemas.extraction import (
     DOCUMENT_TYPE_TO_ATTR,
     DOCUMENT_TYPE_TITLES,
 )
-from app.schemas.deck_content import PitchDeckContent
-from app.core.deck_template import render_pitch_deck
+
+# ---------------------------------------------------------------------------
+# Load reference pitch-deck HTML themes at module level
+# ---------------------------------------------------------------------------
+_DEMO_DECKS_DIR = Path(__file__).parent / "demo_decks"
+_DEMO_THEMES: list[dict[str, str]] = []
+for _html_file in sorted(_DEMO_DECKS_DIR.glob("*.html")):
+    _DEMO_THEMES.append({
+        "name": _html_file.stem,
+        "html": _html_file.read_text(encoding="utf-8"),
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -102,42 +113,65 @@ doc_agent = Agent(
 
 
 # ---------------------------------------------------------------------------
-# 2.  Deck content agent  (structured JSON for pitch deck slides)
+# 2.  HTML deck agent  (generates full self-contained HTML pitch decks)
 # ---------------------------------------------------------------------------
 
-_DECK_CONTENT_SYSTEM_PROMPT = """\
-You are a world-class pitch-deck strategist.  Given structured startup data, \
-produce compelling slide content as structured JSON.
+_DECK_HTML_SYSTEM_PROMPT = """\
+You are a world-class pitch-deck designer who produces stunning, self-contained \
+HTML pitch decks.
 
-## CRITICAL: You MUST populate ALL 9 slides
+## Task
 
-You must return content for every single slide:
-1. **cover** — headline = company name, subheadline = one-liner
-2. **problem** — the pain points being solved
-3. **solution** — how the product solves the problem
-4. **market** — market size and opportunity (populate tam/sam/som if available)
-5. **traction** — key metrics and milestones achieved
-6. **business_model** — how the company makes money
-7. **team** — founding team (populate team_members if available)
-8. **ask** — funding request (populate funding_amount and use_of_funds if available)
-9. **vision** — future vision and closing statement
+Given startup data and a reference HTML deck, produce a COMPLETE self-contained \
+HTML pitch deck that matches the reference's visual aesthetic but uses the \
+provided startup's content.
 
-## Content guidelines
+## Mandatory structure
 
-- Write **persuasive headlines**, not labels.  E.g. "We're solving a $4.2B \
-  problem" not "Problem".
-- Include concrete numbers from the data wherever possible.
-- Make body_points punchy—max 8 words each.  3-5 points per slide.
-- Fill accent_metric with the single most impressive number per slide.
-- Never invent numbers.  If data is missing, write compelling qualitative \
+- Output ONLY valid HTML. Start with `<!DOCTYPE html>`, end with `</html>`.
+- No markdown fences, no explanation, no preamble — raw HTML only.
+- Exactly 9 slides: cover, problem, solution, market, traction, \
+  business_model, team, ask, vision.
+- HLS.js video backgrounds via CDN \
+  (`https://cdn.jsdelivr.net/npm/hls.js@latest`).
+- Keyboard navigation: ArrowLeft / ArrowRight / Space to navigate, \
+  F for fullscreen.
+- Progress dots and a slide counter (e.g. "3 / 9").
+- Responsive sizing with `clamp()` throughout.
+- Tailwind CSS via CDN for utility classes.
+- Lucide Icons via CDN for any icons.
+- Google Fonts `<link>` for the fonts used by the reference theme.
+
+## Content rules
+
+- Write PERSUASIVE headlines, not labels.  \
+  "Solving a $4.2 B crisis" not "Problem".
+- Include concrete numbers from the startup data wherever possible.
+- Bullet points: punchy, max 8 words each, 3–5 per slide.
+- NEVER invent numbers.  If data is missing, use compelling qualitative \
   content instead.
+- Cover slide: company name large, one-liner below.
+- Market slide: show TAM / SAM / SOM as big highlight numbers if available.
+- Ask slide: funding amount prominent, use-of-funds breakdown.
+
+## Style matching
+
+Reproduce the reference deck's visual DNA exactly:
+- Same color palette, gradients, and accent colors.
+- Same font families and typographic scale.
+- Same card / glass / border treatment.
+- Same animation and transition style.
+- Same layout patterns and spacing approach.
+
+Adapt the content structure to fit the startup's actual data while maintaining \
+the aesthetic perfectly.
 """
 
-deck_content_agent = Agent(
+html_deck_agent = Agent(
     model="openai:gpt-5.2",
-    output_type=PitchDeckContent,
-    system_prompt=_DECK_CONTENT_SYSTEM_PROMPT,
-    retries=3,
+    output_type=str,
+    system_prompt=_DECK_HTML_SYSTEM_PROMPT,
+    retries=2,
 )
 
 
@@ -268,10 +302,8 @@ async def generate_document_content(doc_type: str, project_name: str, fields: di
 
 
 async def generate_full_html(project_name: str, all_fields: dict) -> str:
-    """Generate a pitch-deck HTML string via structured AI content + template.
-
-    1. The *deck_content_agent* produces a ``PitchDeckContent`` (structured JSON).
-    2. ``render_pitch_deck`` renders that into deterministic, high-quality HTML.
+    """Generate a pitch-deck HTML string by having the LLM produce a full deck
+    modelled after a randomly selected reference theme.
 
     Parameters
     ----------
@@ -280,13 +312,32 @@ async def generate_full_html(project_name: str, all_fields: dict) -> str:
     all_fields:
         Mapping of ``{doc_type: fields_dict}`` for every document type.
     """
-    prompt = (
-        f"Create pitch deck content for '{project_name}'.\n\n"
-        f"Data:\n{json.dumps(all_fields, indent=2, default=str)}"
-    )
-    result = await deck_content_agent.run(prompt)
-    content: PitchDeckContent = result.output
-    return render_pitch_deck(content, project_name)
+    theme = random.choice(_DEMO_THEMES) if _DEMO_THEMES else None
+
+    prompt = f"Create a pitch deck for '{project_name}'.\n\n"
+    prompt += f"Startup data:\n{json.dumps(all_fields, indent=2, default=str)}\n\n"
+
+    if theme:
+        prompt += (
+            f"Reference HTML deck (theme: '{theme['name']}') — match this "
+            f"aesthetic exactly:\n\n{theme['html']}"
+        )
+
+    result = await html_deck_agent.run(prompt)
+    html = result.output
+
+    # Strip markdown fences if the model wrapped the output
+    html = html.strip()
+    if html.startswith("```"):
+        lines = html.split("\n")
+        # Remove opening fence (e.g. ```html) and closing fence (```)
+        if lines[-1].strip() == "```":
+            lines = lines[1:-1]
+        elif lines[0].startswith("```"):
+            lines = lines[1:]
+        html = "\n".join(lines)
+
+    return html
 
 
 async def generate_llms_txt(project_name: str, all_fields: dict) -> str:
