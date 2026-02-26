@@ -9,6 +9,7 @@ Chat controller with dual-mode (doc / design) logic.
 
 import uuid
 import json
+import logging
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
@@ -33,6 +34,8 @@ from app.models.chat_message import ChatMessage
 from app.models.project import Project, ProjectDocument
 from app.models.user import User
 from app.schemas.extraction import DOCUMENT_TYPE_FIELDS
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -304,24 +307,37 @@ async def _handle_design_mode(
         # Build all_fields dict from documents
         all_fields = {doc.type: doc.fields or {} for doc in documents}
 
-        # Generate full HTML deck
+        # --- Step 1: Generate full HTML deck ---
         full_html = await generate_full_html(project.name, all_fields)
         project.full_html = full_html
+        db.add(project)
+        await db.flush()
+        logger.info("HTML deck generated for project %s", project.id)
 
-        # Generate individual document contents
+        # --- Step 2: Generate individual document contents (fail gracefully per doc) ---
         for doc in documents:
-            doc_content = await generate_document_content(
-                doc.type, project.name, doc.fields or {}
-            )
-            doc.content = doc_content
-            doc.status = "ready"
-            db.add(doc)
+            try:
+                doc_content = await generate_document_content(
+                    doc.type, project.name, doc.fields or {}
+                )
+                doc.content = doc_content
+                doc.status = "ready"
+                db.add(doc)
+            except Exception as doc_err:
+                logger.warning(
+                    "Failed to generate content for doc %s (project %s): %s",
+                    doc.type, project.id, doc_err,
+                )
+        await db.flush()
 
-        # Generate llms.txt
-        llms_txt = await generate_llms_txt(project.name, all_fields)
-        project.llms_txt = llms_txt
+        # --- Step 3: Generate llms.txt (non-critical) ---
+        try:
+            llms_txt = await generate_llms_txt(project.name, all_fields)
+            project.llms_txt = llms_txt
+        except Exception as llms_err:
+            logger.warning("Failed to generate llms.txt for project %s: %s", project.id, llms_err)
 
-        # Generate ai.json
+        # --- Step 4: Generate ai.json (deterministic, should not fail) ---
         ai_json = await generate_ai_json(project.name, all_fields)
         project.ai_json = ai_json
 
@@ -333,6 +349,7 @@ async def _handle_design_mode(
         await db.refresh(project)
 
     except Exception as e:
+        logger.exception("Design generation failed for project %s", project.id)
         project.status = "draft"
         db.add(project)
         await db.flush()
